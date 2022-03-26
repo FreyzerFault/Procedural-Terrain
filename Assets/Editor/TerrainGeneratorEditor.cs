@@ -1,13 +1,13 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(TerrainGenerator))]
+[CustomEditor(typeof(ProceduralTerrain))]
 public class TerrainGeneratorEditor : Editor
 {
 	public override void OnInspectorGUI()
 	{
-		TerrainGenerator terrainGen = target as TerrainGenerator;
-		if (!terrainGen)
+		ProceduralTerrain proceduralTerrainGen = target as ProceduralTerrain;
+		if (!proceduralTerrainGen)
 		{
 			Debug.Log("No existe ningun objeto TerrainGenerator al que modificar su editor en el inspector");
 			return;
@@ -15,22 +15,27 @@ public class TerrainGeneratorEditor : Editor
 
 		// Si se cambio algun valor tambien generamos el mapa
 		if (DrawDefaultInspector())
-			if (terrainGen.autoUpdate)
+			if (proceduralTerrainGen.autoUpdate)
 			{
-				terrainGen.UpdateTerrain();
+				proceduralTerrainGen.UpdateTerrain();
 			}
 
 		// Boton para generar el mapa
-		if (terrainGen && GUILayout.Button("Generate Noise Terrain"))
+		if (proceduralTerrainGen && GUILayout.Button("Generate Noise Terrain"))
 		{
-			terrainGen.useNoise = true;
-			terrainGen.UpdateTerrain();
+			proceduralTerrainGen.useNoise = true;
+			proceduralTerrainGen.UpdateTerrain();
 		}
-		if (terrainGen && GUILayout.Button("Generate Random Terrain"))
+		if (proceduralTerrainGen && GUILayout.Button("Generate Random Terrain"))
 		{
-			terrainGen.useNoise = false;
-			terrainGen.UpdateTerrain();
+			proceduralTerrainGen.useNoise = false;
+			proceduralTerrainGen.UpdateTerrain();
 		}
 
+		if (GUILayout.Button("Reset Seed"))
+		{
+			proceduralTerrainGen.ResetRandomSeed();
+			proceduralTerrainGen.UpdateTerrain();
+		}
 	}
 }

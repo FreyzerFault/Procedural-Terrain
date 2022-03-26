@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class TerrainGenerator : MonoBehaviour
+public class ProceduralTerrain : MonoBehaviour
 {
 	public int depth = 20;
 
@@ -9,29 +9,39 @@ public class TerrainGenerator : MonoBehaviour
 
 	public float scale = 20f;
 
-	public float offsetX = 0f;
-	public float offsetY = 0f;
+	[Range(0.5f, 1f)] public float maxHeight = 1f;
+	[Range(0, 0.5f)] public float minHeight = 0f;
 
+	public Vector2 offset;
+
+	[Range(1, 10)] public int numOctaves = 1;
+	[Range(0, 1)] public float persistance = 1f;
+	[Range(1, 5)] public float lacunarity = 1f;
+
+	[HideInInspector]
 	public bool useNoise = true;
 
 	public Terrain terrain;
 
 	public bool autoUpdate = true;
 
+	public int seed;
+
+	private NoiseMapGenerator nmGenerator = new NoiseMapGenerator();
+
 	[ExecuteInEditMode]
 	void Awake()
 	{
 		terrain = GetComponent<Terrain>();
 
-		offsetX = Random.value * 9999f;
-		offsetY = Random.value * 9999f;
+		offset = new Vector2(Random.value * 9999f, Random.value * 9999f);
 	}
 
 	void Update()
 	{
 		UpdateTerrain();
 
-		offsetX += Time.deltaTime * 5f;
+		offset.x += Time.deltaTime * 5f;
 	}
 
 	public void UpdateTerrain()
@@ -57,23 +67,30 @@ public class TerrainGenerator : MonoBehaviour
 	// Crea un array de alturas 2D
 	private float[,] GenerateHeights()
 	{
-		float[,] heights = new float[width, width];
-
-		for (int x = 0; x < width; x++)
+		float[,] heigths = new float[width, height];
+		if (useNoise)
+		{
+			heigths = nmGenerator.GetNoiseMap(width, height, scale, offset, numOctaves, persistance, lacunarity);
+			for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++)
-				if (useNoise)
-					heights[x, y] = CalculateHeight(x, y);
-				else
-					heights[x, y] = Random.value;
+				heigths[x, y] = Mathf.InverseLerp(minHeight, maxHeight, heigths[x,y]);
+		}
 
-					return heights;
+
+		else
+			for (int x = 0; x < width; x++)
+			{
+				for (int y = 0; y < height; y++)
+				{
+					heigths[x, y] = Random.value;
+				}
+			}
+
+		return heigths;
 	}
 
-	float CalculateHeight(int x, int y)
+	public void ResetRandomSeed()
 	{
-		float xCoord = (float)x / width * scale + offsetX;
-		float yCoord = (float)y / height * scale + offsetY;
-
-		return Mathf.PerlinNoise(xCoord, yCoord);
+		seed = nmGenerator.ResetRandomSeed();
 	}
 }

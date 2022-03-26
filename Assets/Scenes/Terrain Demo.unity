@@ -154,15 +154,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5365d2a4527443d42ad3979fa9880bf8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  depth: 20
+  depth: 22
   width: 256
   height: 256
   scale: 20
-  offsetX: 0
-  offsetY: 0
+  maxHeight: 1
+  minHeight: 0
+  offset: {x: 0, y: 0}
+  numOctaves: 5
+  persistance: 0.43
+  lacunarity: 2
   useNoise: 1
   terrain: {fileID: 762099791}
   autoUpdate: 1
+  seed: 893
 --- !u!154 &762099790
 TerrainCollider:
   m_ObjectHideFlags: 0

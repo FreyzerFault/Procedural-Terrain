@@ -227,6 +227,7 @@ GameObject:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
+  - component: {fileID: 963194229}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -299,6 +300,39 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!114 &963194229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
 --- !u!1 &1902554974
 GameObject:
   m_ObjectHideFlags: 0
@@ -375,7 +409,7 @@ Transform:
   m_GameObject: {fileID: 1902554974}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 250, y: 1, z: 250}
+  m_LocalScale: {x: 241, y: 1, z: 241}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3
@@ -409,12 +443,47 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf4475a0076e96c42b050b7f334ff91e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 250
-  height: 250
-  NoiseScale: 14.3
-  OffsetX: 103.2
-  OffsetY: 200.5
+  width: 241
+  height: 241
+  NoiseScale: 5.29
+  offset: {x: 12.33, y: -3.08}
+  maxHeight: 1.5
+  minHeight: 0
+  octaves: 4
+  persistance: 0.498
+  lacunarity: 1.91
+  seed: 151
+  Gradient:
+    serializedVersion: 2
+    key0: {r: 0, g: 0.17432474, b: 0.3584906, a: 1}
+    key1: {r: 0.097058825, g: 0.53642994, b: 1, a: 1}
+    key2: {r: 0.8235295, g: 0.81568635, b: 0.48627454, a: 0}
+    key3: {r: 0.33333334, g: 0.5921569, b: 0.08627451, a: 0}
+    key4: {r: 0.25490198, g: 0.41960788, b: 0.08627451, a: 0}
+    key5: {r: 0.35686275, g: 0.27058825, b: 0.2392157, a: 0}
+    key6: {r: 0.29411766, g: 0.23529413, b: 0.21176472, a: 0}
+    key7: {r: 1, g: 1, b: 1, a: 0}
+    ctime0: 0
+    ctime1: 8481
+    ctime2: 10601
+    ctime3: 16191
+    ctime4: 36237
+    ctime5: 52428
+    ctime6: 60716
+    ctime7: 65535
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 0
+    m_NumColorKeys: 8
+    m_NumAlphaKeys: 2
   autoUpdate: 1
+  movement: 1
   TextureRenderer: {fileID: 1902554975}
 --- !u!4 &2127221867
 Transform:
