@@ -7,8 +7,10 @@ public static class NoiseMeshGenerator
 	// No generamos la Mesh en este metodo
 	// Porque Generar una MESH tiene la limitacion de que no se puede hacer multithreading
 	// Por lo que este proceso se puede hacer en hilos
-	public static MeshData GenerateTerrainMesh(float[,] heightMap, [CanBeNull] Gradient gradient = null)
+	public static MeshData GenerateTerrainMesh(float[,] heightMap, int LOD = 0, AnimationCurve heightCurve = null, Gradient gradient = null)
 	{
+		heightCurve ??= new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1));
+
 		// Si no se pone ningun gradiente le metemos color de Negro a Blanco
 		if (gradient == null)
 		{
@@ -27,21 +29,27 @@ public static class NoiseMeshGenerator
 		float initX = (width - 1) / -2f;
 		float initY = (height - 1) / -2f;
 
-		MeshData data = new MeshData(width, height);
+		// Incremento entre vertices para asegurar el LOD
+		int simplificationIncrement = LOD == 0 ? 1 : LOD * 2;
+		int verticesPerLine = (width - 1) / simplificationIncrement + 1;
+
+		MeshData data = new MeshData(verticesPerLine, verticesPerLine);
 
 		int vertIndex = 0;
-		for (int x = 0; x < width; x++)
-		for (int y = 0; y < height; y++)
+		for (int y = 0; y < height; y += simplificationIncrement)
+		for (int x = 0; x < width; x += simplificationIncrement)
 		{
-			data.vertices[vertIndex] = new Vector3(initX + x, heightMap[x, y], initY + y);
+			data.vertices[vertIndex] = new Vector3(initX + x, heightCurve.Evaluate(heightMap[x,y]), initY + y);
 			data.uvs[vertIndex] = new Vector2((float)x / width, (float)y / height);
 			data.colors[vertIndex] = gradient.Evaluate(heightMap[x, y]);
 
 			// Ignorando la ultima fila y columna de vertices, añadimos los triangulos
 			if (x < width - 1 && y < height - 1)
 			{
-				data.AddTriangle(vertIndex, vertIndex + height + 1, vertIndex + height);
-				data.AddTriangle(vertIndex + height + 1, vertIndex, vertIndex + 1);
+				//data.AddTriangle(vertIndex, vertIndex + verticesPerLine + 1, vertIndex + verticesPerLine);
+				//data.AddTriangle(vertIndex + verticesPerLine + 1, vertIndex, vertIndex + 1);
+				data.AddTriangle(vertIndex, vertIndex + verticesPerLine, vertIndex + verticesPerLine + 1);
+				data.AddTriangle(vertIndex + verticesPerLine + 1, vertIndex + 1, vertIndex);
 			}
 
 			vertIndex++;
@@ -79,6 +87,7 @@ public class MeshData
 		{
 			Debug.Log("Triangle out of Bounds!!! " + vertices.Length + " Vertices. Triangle(" + a + ", " + b + ", " +
 			          c + ")");
+			return;
 		}
 		triangles[triIndex + 0] = a;
 		triangles[triIndex + 1] = b;

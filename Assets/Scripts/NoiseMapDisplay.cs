@@ -30,6 +30,7 @@ public class NoiseMapDisplay : MonoBehaviour
 
 	public bool autoUpdate;
 	public bool movement;
+	[Range(0,1)] public float speed;
 
 	public Renderer TextureRenderer;
 
@@ -43,39 +44,36 @@ public class NoiseMapDisplay : MonoBehaviour
 	void Update()
 	{
 		if (movement)
-			offset.y -= Time.deltaTime;
+			offset.y -= Time.deltaTime * speed;
 
 		GenerateTexture();
 	}
 
 	public void GenerateTexture(bool noise = true)
 	{
-		Texture2D texture = new Texture2D(width, height);
+		var noiseMap =
+			noise
+			? mapGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity)
+			: GetRandomMap(width, height);
 
-		mapGenerator.setSeed(seed);
+			TextureRenderer.sharedMaterial.mainTexture = NoiseMapGenerator.GetTexture(noiseMap, Gradient);
 
-		// Generamos el Mapa de Ruido
-		float[,] noiseMap = mapGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity);
-
-		// Coloreamos la textura segun el mapa
-		for (int x = 0; x < width; x++)
-		for (int y = 0; y < height; y++)
-		{
-			texture.SetPixel(x, y,
-				noise
-					? NoiseMapGenerator.heightToColor(noiseMap[x, y], Gradient, minHeight, maxHeight)
-					: NoiseMapGenerator.heightToColor(Random.value, Gradient)// Para comparar con un mapa completamente Aleatorio
-				);
-		}
-
-		texture.Apply();
-
-		TextureRenderer.sharedMaterial.mainTexture = texture;
 		TextureRenderer.transform.localScale = new Vector3(width, 1, height);
 	}
 
 	public void ResetRandomSeed()
 	{
 		seed = mapGenerator.ResetRandomSeed();
+	}
+
+	public float[,] GetRandomMap(int width, int height)
+	{
+		float[,] map = new float[width,height];
+
+		for (int x = 0; x < width; x++)
+		for (int y = 0; y < height; y++)
+			map[x, y] = Random.value;
+
+		return map;
 	}
 }

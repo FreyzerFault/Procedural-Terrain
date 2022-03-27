@@ -18,8 +18,8 @@ namespace Assets.Editor
 			// Si se cambio algun valor tambien generamos el mapa
 			if (DrawDefaultInspector() && meshDisplay.autoUpdate)
 			{
-				//meshDisplay.CreateShape();
-				//meshDisplay.UpdateMesh();
+				meshDisplay.CreateShape();
+				meshDisplay.UpdateMesh();
 			}
 
 			// Boton para generar el mapa

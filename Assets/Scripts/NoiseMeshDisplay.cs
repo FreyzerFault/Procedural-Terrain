@@ -5,19 +5,17 @@ using UnityEngine;
 public class NoiseMeshDisplay : MonoBehaviour
 {
 	[HideInInspector]
-	public Mesh mesh;
+	public MeshFilter meshFilter;
+	public MeshRenderer MeshRenderer;
+
 	public MeshData meshData;
+	public Texture2D texture;
+
 
 	[Space]
-	// Color
-	public Gradient gradient = new Gradient();
 
-	[Space]
-
-	[Range(0, 256)]
-	public int xSize = 20;
-	[Range(0, 256)]
-	public int zSize = 20;
+	[Range(0, 241)] public int chunkSize = 20;
+	[Range(0, 6)] public int LOD = 1;
 	
 	public float noiseScale = .3f;
 
@@ -25,6 +23,11 @@ public class NoiseMeshDisplay : MonoBehaviour
 	[Range(0, 1)] public float persistance = 1f;
 	[Range(1, 5)] public float lacunarity = 1f;
 
+	[Space]
+
+	public Gradient gradient = new Gradient();
+
+	public AnimationCurve heightCurve = new AnimationCurve();
 	[Range(0.01f, 100f)] public float heightScale;
 
 	public Vector2 offset;
@@ -33,6 +36,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	public bool autoUpdate = true;
 	public bool movement = true;
+	[Range(0, 1)] public float speed;
 
 	[Space]
 
@@ -40,7 +44,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	private NoiseMapGenerator mapGenerator = new NoiseMapGenerator();
 
-	void Awake()
+	void Start()
 	{
 		CreateShape();
 		UpdateMesh();
@@ -52,7 +56,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 		{
 			CreateShape();
 			UpdateMesh();
-			offset.x += Time.deltaTime;
+			offset.x += Time.deltaTime * speed;
 		}
 	}
 
@@ -61,22 +65,21 @@ public class NoiseMeshDisplay : MonoBehaviour
 		mapGenerator.setSeed(seed);
 
 		float[,] noiseMap =
-			mapGenerator.GetNoiseMap(xSize, zSize, noiseScale, offset, octaves, persistance, lacunarity);
-		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, gradient);
+			mapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity);
+		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, LOD, heightCurve, gradient);
+		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
 	}
 
 	public void UpdateMesh()
 	{
-		transform.localScale = new Vector3(1, heightScale, 1);
+		meshFilter = GetComponent<MeshFilter>();
+		MeshRenderer = GetComponent<MeshRenderer>();
+		
+		meshFilter.sharedMesh = meshData.CreateMesh();
+		
+		MeshRenderer.sharedMaterial.mainTexture = texture;
 
-		mesh.Clear();
-		mesh = meshData.CreateMesh();
-		if (GetComponent<MeshFilter>() == null)
-		{
-			print("No hay MeshFilter!!!");
-			return;
-		}
-		GetComponent<MeshFilter>().mesh = mesh;
+		transform.localScale = new Vector3(1, heightScale, 1);
 	}
 
 	public void ResetRandomSeed()
