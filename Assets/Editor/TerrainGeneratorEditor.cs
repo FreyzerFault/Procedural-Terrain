@@ -1,41 +1,41 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(ProceduralTerrain))]
-public class TerrainGeneratorEditor : Editor
+namespace Assets.Editor
 {
-	public override void OnInspectorGUI()
+	[CustomEditor(typeof(ProceduralTerrain))]
+	public class TerrainGeneratorEditor : UnityEditor.Editor
 	{
-		ProceduralTerrain proceduralTerrainGen = target as ProceduralTerrain;
-		if (!proceduralTerrainGen)
+		public override void OnInspectorGUI()
 		{
-			Debug.Log("No existe ningun objeto TerrainGenerator al que modificar su editor en el inspector");
-			return;
-		}
-
-		// Si se cambio algun valor tambien generamos el mapa
-		if (DrawDefaultInspector())
-			if (proceduralTerrainGen.autoUpdate)
+			ProceduralTerrain proceduralTerrainGen = target as ProceduralTerrain;
+			if (proceduralTerrainGen == null)
 			{
+				Debug.Log("No existe ningun objeto TerrainGenerator al que modificar su editor en el inspector");
+				return;
+			}
+
+			// Si se cambio algun valor tambien generamos el mapa
+			if (DrawDefaultInspector() && proceduralTerrainGen.autoUpdate)
+				proceduralTerrainGen.UpdateTerrain();
+
+			// Boton para generar el mapa
+			if (GUILayout.Button("Generate Noise Terrain"))
+			{
+				proceduralTerrainGen.useNoise = true;
+				proceduralTerrainGen.UpdateTerrain();
+			}
+			if (GUILayout.Button("Generate Random Terrain"))
+			{
+				proceduralTerrainGen.useNoise = false;
 				proceduralTerrainGen.UpdateTerrain();
 			}
 
-		// Boton para generar el mapa
-		if (proceduralTerrainGen && GUILayout.Button("Generate Noise Terrain"))
-		{
-			proceduralTerrainGen.useNoise = true;
-			proceduralTerrainGen.UpdateTerrain();
-		}
-		if (proceduralTerrainGen && GUILayout.Button("Generate Random Terrain"))
-		{
-			proceduralTerrainGen.useNoise = false;
-			proceduralTerrainGen.UpdateTerrain();
-		}
-
-		if (GUILayout.Button("Reset Seed"))
-		{
-			proceduralTerrainGen.ResetRandomSeed();
-			proceduralTerrainGen.UpdateTerrain();
+			if (GUILayout.Button("Reset Seed"))
+			{
+				proceduralTerrainGen.ResetRandomSeed();
+				proceduralTerrainGen.UpdateTerrain();
+			}
 		}
 	}
 }

@@ -1,11 +1,13 @@
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class ProceduralTerrain : MonoBehaviour
 {
 	public int depth = 20;
 
-	public int width = 256;
-	public int height = 256;
+	public int width = 257;
+	public int height = 257;
 
 	public float scale = 20f;
 
@@ -27,7 +29,7 @@ public class ProceduralTerrain : MonoBehaviour
 
 	public int seed;
 
-	private NoiseMapGenerator nmGenerator = new NoiseMapGenerator();
+	private NoiseMapGenerator mapGenerator = new NoiseMapGenerator();
 
 	[ExecuteInEditMode]
 	void Awake()
@@ -53,7 +55,7 @@ public class ProceduralTerrain : MonoBehaviour
 	// Y genera alturas en cada pixel
 	TerrainData GenerateTerrain(TerrainData terrainData)
 	{
-		terrainData.heightmapResolution = width + 1;
+		terrainData.heightmapResolution = Math.Max(width + 1, height + 1);
 
 		// El nuevo terreno tendra las dimensiones dadas
 		terrainData.size = new Vector3(width, depth, height);
@@ -70,7 +72,7 @@ public class ProceduralTerrain : MonoBehaviour
 		float[,] heigths = new float[width, height];
 		if (useNoise)
 		{
-			heigths = nmGenerator.GetNoiseMap(width, height, scale, offset, numOctaves, persistance, lacunarity);
+			heigths = mapGenerator.GetNoiseMap(width, height, scale, offset, numOctaves, persistance, lacunarity);
 			for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++)
 				heigths[x, y] = Mathf.InverseLerp(minHeight, maxHeight, heigths[x,y]);
@@ -79,18 +81,14 @@ public class ProceduralTerrain : MonoBehaviour
 
 		else
 			for (int x = 0; x < width; x++)
-			{
-				for (int y = 0; y < height; y++)
-				{
+			for (int y = 0; y < height; y++)
 					heigths[x, y] = Random.value;
-				}
-			}
 
 		return heigths;
 	}
 
 	public void ResetRandomSeed()
 	{
-		seed = nmGenerator.ResetRandomSeed();
+		seed = mapGenerator.ResetRandomSeed();
 	}
 }

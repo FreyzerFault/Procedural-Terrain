@@ -3,11 +3,13 @@ using UnityEngine;
 
 public class NoiseMapGenerator
 {
-	// TODO Maximo y Minimo de Altura calculado a ojo, debe de haber otra forma
-	private const float maxHeight = 2f, minHeight = -2f;
+	// Maximo Valor segun los octavos que se use y su persistencia
+	// A medida que acumulamos los octavos el maximo sera la suma de sus amplitudes
+	private static float maxNoise = 1;
 
 	private Vector2[] octaveOffsets;
 	private int seed = DateTime.Now.Millisecond;
+	private bool seedChanged = false;
 
 	// Devuelve un Mapa de Ruido
 	public float[,] GetNoiseMap(
@@ -16,8 +18,20 @@ public class NoiseMapGenerator
 		)
 	{
 		// Si los offset de los octavos no coinciden con el numero de los octavos tenemos que generarlos
-		if (octaveOffsets == null || octaveOffsets.Length != numOctaves)
+		if (octaveOffsets == null || octaveOffsets.Length != numOctaves || seedChanged)
+		{
 			octaveOffsets = GetRandomOctaveOffsets(numOctaves, seed);
+			seedChanged = false;
+		}
+
+		// Calculamos el maximo valor para luego interpolarlo a [0,1]
+		float amplitude = 1f;
+		maxNoise = 0;
+		for (int i = 0; i < numOctaves; i++)
+		{
+			maxNoise += amplitude;
+			amplitude *= persistance;
+		}
 
 		float[,] noiseMap = new float[width, height];
 
@@ -26,7 +40,7 @@ public class NoiseMapGenerator
 		for (int y = 0; y < height; y++)
 		{
 			// Amplitud y frecuencia de cada Octavo
-			float amplitude = 1;
+			amplitude = 1;
 			float frecuency = 1;
 
 			// Ruido acumulado por cada octavo
@@ -55,11 +69,8 @@ public class NoiseMapGenerator
 				frecuency *= lacunarity;
 			}
 
-			// Volvemos a mapear la onda de -1,1 a 0,1
-			noiseHeight += (noiseHeight + 1) / 2;
-
 			// Almacenamos el Ruido resultante interpolado entre el Maximo y el Minimo
-			noiseMap[x, y] = Mathf.InverseLerp(minHeight, maxHeight, noiseHeight);
+			noiseMap[x, y] = Mathf.InverseLerp(-maxNoise, maxNoise, noiseHeight);
 		}
 
 		return noiseMap;
@@ -80,7 +91,11 @@ public class NoiseMapGenerator
 		return seed = DateTime.Now.Millisecond;
 	}
 
-	public void setSeed(int s) { seed = s; }
+	public void setSeed(int s)
+	{
+		seed = s;
+		seedChanged = true;
+	}
 	public int getSeed() { return seed; }
 
 	private static Vector2 GetMapCoordinates(int x, int y, int width, int height, Vector2 offset, float scale)

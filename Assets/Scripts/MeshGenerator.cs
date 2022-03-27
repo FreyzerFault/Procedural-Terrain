@@ -1,122 +1,104 @@
+using JetBrains.Annotations;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
-[RequireComponent(typeof(MeshFilter))]
-public class MeshGenerator : MonoBehaviour
+public static class NoiseMeshGenerator
 {
-	[HideInInspector]
-	public Mesh mesh;
-
-	private Vector3[] vertices;
-	private int[] triangles;
-	private Color[] colors;
-
-	public Gradient materialGradient;
-
-	[Space]
-
-	[Range(0, 256)]
-	public int xSize = 20;
-	[Range(0, 256)]
-	public int zSize = 20;
-	
-	public float noiseScale = .3f;
-	
-	public float maxHeight = 2f;
-	public float minHeight = 0f;
-
-	public float offsetX = 0f;
-	public float offsetZ = 0f;
-
-	[Space]
-
-	public bool autoUpdate = true;
-
-	public bool movement = true;
-
-	public bool useNoise = true;
-	
-	void Awake()
+	// Generamos los datos de la malla (Vertices, Triangulos, Colors / UVs)
+	// No generamos la Mesh en este metodo
+	// Porque Generar una MESH tiene la limitacion de que no se puede hacer multithreading
+	// Por lo que este proceso se puede hacer en hilos
+	public static MeshData GenerateTerrainMesh(float[,] heightMap, [CanBeNull] Gradient gradient = null)
 	{
-		mesh = new Mesh();
-
-		GetComponent<MeshFilter>().mesh = mesh;
-
-		CreateShape();
-		UpdateMesh();
-	}
-
-	void Update()
-	{
-		if (movement)
+		// Si no se pone ningun gradiente le metemos color de Negro a Blanco
+		if (gradient == null)
 		{
-			CreateShape();
-			UpdateMesh();
-			offsetX += Time.deltaTime;
-		}
-	}
-
-	public void CreateShape()
-	{
-		int vertexCount = (xSize + 1) * (zSize + 1);
-		vertices = new Vector3[vertexCount];
-		colors = new Color[vertexCount];
-
-		for (int i = 0, z = 0; z <= zSize; z++)
-			for (int x = 0; x <= xSize; x++)
-			{
-				// Altura del vertice:
-				float y;
-				if (useNoise)
-					y = Mathf.Lerp(
-						minHeight, maxHeight,
-						Mathf.PerlinNoise(
-							x * noiseScale + offsetX,
-							z * noiseScale + offsetZ)
-						);
-				else
-					y = Random.value * maxHeight;
-
-				vertices[i] = new Vector3(x, y, z);
-
-				// Color con gradiente segun la Altura
-				colors[i] = materialGradient.Evaluate(Mathf.InverseLerp(minHeight, maxHeight, vertices[i].y) );
-
-				i++;
-			}
-
-		// Indices de Triangulos
-		triangles = new int[6 * xSize * zSize];
-
-		int vert = 0, tris = 0;
-		for (int z = 0; z < zSize; z++)
-		{
-			for (int x = 0; x < xSize; x++)
-			{
-				triangles[tris + 0] = vert + 0;
-				triangles[tris + 1] = vert + xSize + 1;
-				triangles[tris + 2] = vert + 1;
-				triangles[tris + 3] = vert + 1;
-				triangles[tris + 4] = vert + xSize + 1;
-				triangles[tris + 5] = vert + xSize + 2;
-
-				vert++;
-				tris += 6;
-			}
-			vert++;
+			gradient = new Gradient();
+			GradientColorKey[] colors = new GradientColorKey[2]
+				{ new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) };
+			GradientAlphaKey[] alphas = new GradientAlphaKey[2]
+				{ new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) };
+			gradient.SetKeys(colors, alphas);
 		}
 
+		int width = heightMap.GetLength(0);
+		int height = heightMap.GetLength(1);
+
+		// La malla la creamos centrada en 0:
+		float initX = (width - 1) / -2f;
+		float initY = (height - 1) / -2f;
+
+		MeshData data = new MeshData(width, height);
+
+		int vertIndex = 0;
+		for (int x = 0; x < width; x++)
+		for (int y = 0; y < height; y++)
+		{
+			data.vertices[vertIndex] = new Vector3(initX + x, heightMap[x, y], initY + y);
+			data.uvs[vertIndex] = new Vector2((float)x / width, (float)y / height);
+			data.colors[vertIndex] = gradient.Evaluate(heightMap[x, y]);
+
+			// Ignorando la ultima fila y columna de vertices, añadimos los triangulos
+			if (x < width - 1 && y < height - 1)
+			{
+				data.AddTriangle(vertIndex, vertIndex + height + 1, vertIndex + height);
+				data.AddTriangle(vertIndex + height + 1, vertIndex, vertIndex + 1);
+			}
+
+			vertIndex++;
+		}
+
+		return data;
+	}
+}
+
+
+public class MeshData
+{
+	public Vector3[] vertices;
+	public int[] triangles;
+
+	// Redundante, para usar o Colores o Textura
+	public Vector2[] uvs;
+	public Color[] colors;
+
+	public MeshData(int meshWidth, int meshHeight)
+	{
+		vertices = new Vector3[meshWidth * meshHeight];
+
+		uvs = new Vector2[meshWidth * meshHeight];
+		colors = new Color[meshWidth * meshHeight];
+
+		triangles = new int[(meshWidth - 1) * (meshHeight - 1) * 6];
 	}
 
-	public void UpdateMesh()
-	{
-		mesh.Clear();
+	private int triIndex = 0;
 
-		mesh.vertices = vertices;
-		mesh.triangles = triangles;
-		mesh.colors = colors;
+	public void AddTriangle(int a, int b, int c)
+	{
+		if (a >= vertices.Length || b >= vertices.Length || c >= vertices.Length)
+		{
+			Debug.Log("Triangle out of Bounds!!! " + vertices.Length + " Vertices. Triangle(" + a + ", " + b + ", " +
+			          c + ")");
+		}
+		triangles[triIndex + 0] = a;
+		triangles[triIndex + 1] = b;
+		triangles[triIndex + 2] = c;
+		triIndex += 3;
+	}
+
+	// Este Metodo no puede hacerse en otro Hilo
+	public Mesh CreateMesh()
+	{
+		Mesh mesh = new Mesh
+		{
+			vertices = vertices,
+			triangles = triangles,
+			uv = uvs,
+			colors = colors
+		};
 
 		mesh.RecalculateNormals();
+
+		return mesh;
 	}
-	
 }

@@ -445,14 +445,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 241
   height: 241
-  NoiseScale: 5.29
+  NoiseScale: 9.22
   offset: {x: 12.33, y: -3.08}
-  maxHeight: 1.5
+  maxHeight: 1
   minHeight: 0
   octaves: 4
-  persistance: 0.498
-  lacunarity: 1.91
-  seed: 151
+  persistance: 0.5
+  lacunarity: 2
+  seed: 389
   Gradient:
     serializedVersion: 2
     key0: {r: 0, g: 0.17432474, b: 0.3584906, a: 1}
@@ -464,12 +464,12 @@ MonoBehaviour:
     key6: {r: 0.29411766, g: 0.23529413, b: 0.21176472, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
     ctime0: 0
-    ctime1: 8481
-    ctime2: 10601
-    ctime3: 16191
+    ctime1: 21010
+    ctime2: 25250
+    ctime3: 29684
     ctime4: 36237
-    ctime5: 52428
-    ctime6: 60716
+    ctime5: 44718
+    ctime6: 51657
     ctime7: 65535
     atime0: 0
     atime1: 65535

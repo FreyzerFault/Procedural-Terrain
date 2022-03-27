@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -34,7 +33,7 @@ public class NoiseMapDisplay : MonoBehaviour
 
 	public Renderer TextureRenderer;
 
-	private NoiseMapGenerator nmGenerator = new NoiseMapGenerator();
+	private NoiseMapGenerator mapGenerator = new NoiseMapGenerator();
 
 	void Start()
 	{
@@ -53,8 +52,10 @@ public class NoiseMapDisplay : MonoBehaviour
 	{
 		Texture2D texture = new Texture2D(width, height);
 
+		mapGenerator.setSeed(seed);
+
 		// Generamos el Mapa de Ruido
-		float[,] noiseMap = nmGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity);
+		float[,] noiseMap = mapGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity);
 
 		// Coloreamos la textura segun el mapa
 		for (int x = 0; x < width; x++)
@@ -64,7 +65,7 @@ public class NoiseMapDisplay : MonoBehaviour
 				noise
 					? NoiseMapGenerator.heightToColor(noiseMap[x, y], Gradient, minHeight, maxHeight)
 					: NoiseMapGenerator.heightToColor(Random.value, Gradient)// Para comparar con un mapa completamente Aleatorio
-				); 
+				);
 		}
 
 		texture.Apply();
@@ -75,6 +76,6 @@ public class NoiseMapDisplay : MonoBehaviour
 
 	public void ResetRandomSeed()
 	{
-		seed = nmGenerator.ResetRandomSeed();
+		seed = mapGenerator.ResetRandomSeed();
 	}
 }
