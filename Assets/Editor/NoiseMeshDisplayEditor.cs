@@ -17,24 +17,17 @@ namespace Assets.Editor
 
 			// Si se cambio algun valor tambien generamos el mapa
 			if (DrawDefaultInspector() && meshDisplay.autoUpdate)
-			{
-				meshDisplay.CreateShape();
-				meshDisplay.UpdateMesh();
-			}
+				meshDisplay.CreateTerrain();
 
-			// Boton para generar el mapa
+				// Boton para generar el mapa
 			if (GUILayout.Button("Generate Noise Terrain"))
-			{
-				meshDisplay.CreateShape();
-				meshDisplay.UpdateMesh();
-			}
+				meshDisplay.CreateTerrain();
 
 
 			if (GUILayout.Button("Reset Seed"))
 			{
 				meshDisplay.ResetRandomSeed();
-				meshDisplay.CreateShape();
-				meshDisplay.UpdateMesh();
+				meshDisplay.CreateTerrain();
 			}
 		}
 	}

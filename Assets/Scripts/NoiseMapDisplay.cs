@@ -56,7 +56,7 @@ public class NoiseMapDisplay : MonoBehaviour
 			? mapGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity)
 			: GetRandomMap(width, height);
 
-			TextureRenderer.sharedMaterial.mainTexture = NoiseMapGenerator.GetTexture(noiseMap, Gradient);
+		TextureRenderer.sharedMaterial.mainTexture = NoiseMapGenerator.GetTexture(noiseMap, Gradient);
 
 		TextureRenderer.transform.localScale = new Vector3(width, 1, height);
 	}

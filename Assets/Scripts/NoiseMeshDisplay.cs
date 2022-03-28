@@ -1,20 +1,19 @@
 using System;
 using UnityEngine;
 
-[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(
+	typeof(MeshFilter),
+	typeof(MeshRenderer)
+)]
 public class NoiseMeshDisplay : MonoBehaviour
 {
-	[HideInInspector]
-	public MeshFilter meshFilter;
-	public MeshRenderer MeshRenderer;
-
 	public MeshData meshData;
 	public Texture2D texture;
 
 
 	[Space]
 
-	[Range(0, 241)] public int chunkSize = 20;
+	[Range(0, 241)] public int chunkSize = 241;
 	[Range(0, 6)] public int LOD = 1;
 	
 	public float noiseScale = .3f;
@@ -44,42 +43,81 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	private NoiseMapGenerator mapGenerator = new NoiseMapGenerator();
 
-	void Start()
+	private float[,] noiseMap;
+
+	void Awake()
 	{
-		CreateShape();
-		UpdateMesh();
+		GameObject player = GameObject.FindGameObjectWithTag("Player");
+		if (player != null)
+			UpdateLOD(player.transform.position);
+
+		CreateTerrain();
 	}
 
 	void Update()
 	{
 		if (movement)
 		{
-			CreateShape();
-			UpdateMesh();
+			CreateTerrain();
 			offset.x += Time.deltaTime * speed;
 		}
+
 	}
 
-	public void CreateShape()
+	public void CreateTerrain()
 	{
 		mapGenerator.setSeed(seed);
 
-		float[,] noiseMap =
-			mapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity);
-		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, LOD, heightCurve, gradient);
-		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
+		CreateNoiseMap();
+		CreateTexture();
+		CreateMesh();
+		AdjustHeightScale();
+		SetTerrainCollider();
 	}
 
-	public void UpdateMesh()
+	public void CreateNoiseMap()
 	{
-		meshFilter = GetComponent<MeshFilter>();
-		MeshRenderer = GetComponent<MeshRenderer>();
+		noiseMap =
+			mapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity);
+	}
+	public void CreateMesh()
+	{
+		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, LOD, heightCurve, gradient);
 		
-		meshFilter.sharedMesh = meshData.CreateMesh();
+		GetComponent<MeshFilter>().mesh = meshData.CreateMesh();
+	}
+	public void CreateTexture()
+	{
+		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
 		
-		MeshRenderer.sharedMaterial.mainTexture = texture;
+		GetComponent<MeshRenderer>().material.mainTexture = texture;
+	}
 
+	public void AdjustHeightScale()
+	{
 		transform.localScale = new Vector3(1, heightScale, 1);
+	}
+
+	public void UpdateLOD(Vector2 playerWorldPos)
+	{
+		Vector2 terrainWorldPos = new Vector2(transform.position.x, transform.position.z);
+		LOD = Mathf.FloorToInt((terrainWorldPos - playerWorldPos).magnitude / chunkSize);
+	}
+
+	private void SetTerrainCollider()
+	{
+		TerrainCollider terrainCollider = GetComponent<TerrainCollider>();
+		if (terrainCollider != null)
+		{
+			float[,] noiseCollider = new float[chunkSize, chunkSize];
+			for (int x = 0; x < chunkSize; x++)
+			for (int y = 0; y < chunkSize; y++)
+				noiseCollider[x, y] = noiseMap[x, y] * noiseScale;
+
+			TerrainData data = terrainCollider.terrainData = new TerrainData();
+			data.heightmapResolution = chunkSize;
+			data.SetHeights(0,0, noiseCollider);
+		}
 	}
 
 	public void ResetRandomSeed()
