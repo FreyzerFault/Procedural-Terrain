@@ -66,18 +66,10 @@ public class NoiseMapGenerator
 		return noiseMap;
 	}
 
-	public static Texture2D GetTexture(float[,] noiseMap, Gradient gradient = null)
+	public static Texture2D GetTexture(float[,] noiseMap, [CanBeNull] Gradient gradient = null)
 	{
 		// Si no se pasa un Gradiente se utiliza uno basico entre Negro y Blanco
-		if (gradient == null)
-		{
-			gradient = new Gradient();
-			GradientColorKey[] colors = new GradientColorKey[2]
-				{ new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) };
-			GradientAlphaKey[] alphas = new GradientAlphaKey[2]
-				{ new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) };
-			gradient.SetKeys(colors, alphas);
-		}
+		gradient ??= NoiseMeshGenerator.GetDefaultGradient();
 
 		int width = noiseMap.GetLength(0), height = noiseMap.GetLength(1);
 

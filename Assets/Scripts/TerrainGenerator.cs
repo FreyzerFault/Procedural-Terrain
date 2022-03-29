@@ -12,46 +12,43 @@ public class TerrainGenerator : MonoBehaviour
 
 	// Distancia desde el chunk central al borde
 	public int renderDistance = 6;
+
+	public int maxLOD = 6;
 	
+	[Serializable]
 	public class NoiseParameters
 	{
-		public float noiseScale = .3f;
+		public Vector2 offset = new Vector2(0, 0);
 
-		[Range(1, 10)] public int octaves = 1;
-		[Range(0, 1)] public float persistance = 1f;
-		[Range(1, 5)] public float lacunarity = 1f;
+		public float noiseScale = 5f;
+
+		[Range(1, 10)] public int octaves = 3;
+		[Range(0, 1)] public float persistance = .5f;
+		[Range(1, 5)] public float lacunarity = 2f;
 
 		[Space]
 
 		public Gradient gradient = new Gradient();
-
 		public AnimationCurve heightCurve = new AnimationCurve();
-		[Range(0.01f, 100f)] public float heightScale;
 
-		public Vector2 offset;
+		[Range(0.01f, 100f)] public float heightScale = 50f;
 
 		public int seed = DateTime.Now.Millisecond;
 	}
 
 	[InspectorName("Noise Parameters")]
-	[SerializeField]
 	public NoiseParameters np = new NoiseParameters();
 
-	private Vector2[,] chunks;
+	private Vector2[,] chunksRendered;
 
 	private Vector2 playerChunk = new Vector2(0,0);
 
-	private Dictionary<Vector2, MeshData> meshData;
-	private Dictionary<Vector2, GameObject> terrains = new Dictionary<Vector2, GameObject>();
-
-	private float[,] noiseMap;
-	private Texture2D texture;
+	private Dictionary<Vector2, TerrainPlane> terrains = new Dictionary<Vector2, TerrainPlane>();
 
 	// Start is called before the first frame update
 	void Start()
 	{
 		Clear();
-		Initialize();
 		LoadChunks();
 	}
 
@@ -61,30 +58,11 @@ public class TerrainGenerator : MonoBehaviour
 		// Cuando cambie de chunk recalculamos to
 		if (playerChunk != getChunk(Player.position))
 		{
-			playerChunk = getChunk(Player.position);
-
 			LoadChunks();
+			UpdateLODs();
 		}
 
 		Vector2 playerPosition = getLocalPos(Player.position);
-	}
-
-	public void Initialize()
-	{
-		GenerateNoise();
-		GenerateTexture();
-		LoadChunks();
-	}
-
-	private void GenerateNoise()
-	{
-		int noiseWidth = GetBorderLength() * chunkSize;
-		noiseMap = new float[noiseWidth, noiseWidth];
-		noiseMap = NoiseMapGenerator.GetNoiseMap(noiseWidth, noiseWidth, np.noiseScale, np.offset, np.octaves, np.persistance, np.lacunarity, np.seed);
-	}
-	private void GenerateTexture()
-	{
-		texture = NoiseMapGenerator.GetTexture(noiseMap, np.gradient);
 	}
 
 	// Load ALL chunks (Update if no need to Create)
@@ -97,7 +75,7 @@ public class TerrainGenerator : MonoBehaviour
 
 		int borderLength = GetBorderLength();
 
-		chunks = new Vector2[borderLength,borderLength];
+		chunksRendered = new Vector2[borderLength,borderLength];
 
 		// Volvemos a generar los chunks con distinto LOD segun su distancia
 		for (int x = 0; x < borderLength; x++)
@@ -108,31 +86,26 @@ public class TerrainGenerator : MonoBehaviour
 			// Si ya esta cargado actualizamos su LOD y su malla solamente
 			if (terrains.ContainsKey(chunk))
 			{
-				UpdateChunk(chunk);
+				UpdateLOD(chunk);
 			}
 			else
 			{
-				CreateTerrain(chunk);
+				GenerateTerrain(chunk);
 			}
 		}
 	}
 
 	// Update ALL chunks
-	public void ReloadChunks()
+	public void UpdateLODs()
 	{
-		int borderLength = GetBorderLength();
-		for (int x = 0; x < borderLength; x++)
-		for (int y = 0; y < borderLength; y++)
+		playerChunk = getChunk(Player.position);
+
+		foreach (var it in terrains)
 		{
-			UpdateChunk(CreateChunk(x,y));
+			it.Value.UpdateLOD(GetLOD(it.Key));
 		}
 	}
 
-	private void UpdateChunk(Vector2 chunk)
-	{
-		GameObject terrain = terrains[chunk];
-		// TODO Regenerar la malla
-	}
 
 	private Vector2 CreateChunk(int x, int y)
 	{
@@ -140,74 +113,60 @@ public class TerrainGenerator : MonoBehaviour
 			x - renderDistance + playerChunk.x,
 			y - renderDistance + playerChunk.y
 		);
-		return chunks[x, y] = chunk;
+		return chunksRendered[x, y] = chunk;
 	}
 	
-	private void CreateTerrain(Vector2 chunk)
+	private void GenerateTerrain(Vector2 chunk)
 	{
-		// Creo las Mallas de cada chunk
-
 		Vector2 globalPos = getGlobalPos(chunk);
 
-		// Saco la matriz de Ruido de mi chunk a partir de la matriz del mundo
-		float[,] heightMap = new float[chunkSize, chunkSize];
-		for (int x = 0; x < chunkSize; x++)
-		for (int y = 0; y < chunkSize; y++)
-		{
-			Vector2 origin = getGlobalPos(GetFirstChunk());
-			Vector2 final = origin + GetBorderLength() * new Vector2(chunkSize, chunkSize);
-			Vector2 offset = new Vector2(
-				Mathf.InverseLerp(origin.x, final.x, chunk.x) * noiseMap.GetLength(0),
-				Mathf.InverseLerp(origin.y, final.y, chunk.y) * noiseMap.GetLength(0)
-			);
-			heightMap[x, y] = noiseMap[x + (int)offset.x, y + (int)offset.y];
-		}
-
-		meshData.Add(chunk, NoiseMeshGenerator.GenerateTerrainMesh(heightMap, GetLOD(chunk), np.heightCurve, np.gradient));
-
-		// TODO generar la Malla
-
-		Mesh mesh = meshData[chunk].CreateMesh();
-
-		terrains.Add(chunk,
+		terrains.Add(
+			chunk,
 			Instantiate(
 				TerrainPrefab,
 				new Vector3(globalPos.x, 0, globalPos.y),
 				Quaternion.identity,
 				transform
-			)
+			).GetComponent<TerrainPlane>()
 		);
 
-		terrains[chunk].GetComponent<MeshFilter>().mesh = mesh;
+		terrains[chunk].Generate(
+			chunkSize, chunkSize, np.noiseScale, GetOffset(chunk),
+			np.octaves, np.persistance, np.lacunarity, np.seed,
+			np.heightScale, GetLOD(chunk), np.heightCurve, np.gradient);
 	}
 
-	private Vector2 GetFirstChunk()
+	private void UpdateLOD(Vector2 chunk)
 	{
-		return chunks[0, 0];
+		TerrainPlane terrain = terrains[chunk];
+		terrain.UpdateLOD(GetLOD(chunk));
 	}
 
-	public int GetLOD(Vector2 chunk)
-	{
-		return Mathf.FloorToInt((chunk - playerChunk).magnitude);
-	}
-	public Vector2 GetOffset(Vector2 chunk)
-	{
-		return chunk * np.noiseScale;
-	}
-
-	private void OffsetTerrain(Vector2 chunk)
-	{
-		NoiseMeshDisplay terrain = TerrainPrefab.GetComponent<NoiseMeshDisplay>();
-		terrain.offset = chunk * terrain.noiseScale;
-	}
-
-
+	// Parametros que dependen del Area de Chunks Renderizados segun la posicion del Player
+	// Longitud del Borde de los chunks, que sera el tamaño de mi matriz de Chunks Renderizados
 	private int GetBorderLength()
 	{
 		return renderDistance * 2 + 1;
 	}
 
+	// Parametros que dependen del Chunk:
+	// Level Of Detail
+	public int GetLOD(Vector2 chunk)
+	{
+		int LOD = Mathf.FloorToInt((chunk - playerChunk).magnitude);
+		return LOD;
+	}
+	// Noise Offset
+	public Vector2 GetOffset(Vector2 chunk)
+	{
+		return chunk * np.noiseScale;
+	}
 
+
+
+	// =========================================================
+	// Transformaciones de Espacio de Mundo al Espacio del Chunk:
+	
 	Vector2 getChunk(Vector2 pos)
 	{
 		return new Vector2(
@@ -222,7 +181,7 @@ public class TerrainGenerator : MonoBehaviour
 			Mathf.Round(pos.z / chunkSize)
 		);
 	}
-
+	
 	Vector2 getLocalPos(Vector2 pos)
 	{
 		return pos - getGlobalPos(getChunk(pos));
@@ -232,16 +191,19 @@ public class TerrainGenerator : MonoBehaviour
 		return new Vector2(pos.x, pos.z) - getGlobalPos(getChunk(pos));
 	}
 
+	// Posicion del Chunk en el Espacio de Mundo
 	Vector2 getGlobalPos(Vector2 chunkPos)
 	{
 		return chunkPos * (new Vector2(chunkSize - 1, chunkSize - 1));
 	}
 
+	// Resetea la Semilla de forma Aleatoria
 	public void ResetRandomSeed()
 	{
 		np.seed = NoiseMapGenerator.generateRandomSeed();
 	}
 
+	// Borra todos los terrenos renderizados
 	public void Clear()
 	{
 		NoiseMeshDisplay[] children = GetComponentsInChildren<NoiseMeshDisplay>();
@@ -252,10 +214,11 @@ public class TerrainGenerator : MonoBehaviour
 		terrains.Clear();
 	}
 
+	// Borra todos los terrenos renderizados
 	public void ClearImmediate()
 	{
-		NoiseMeshDisplay[] children = GetComponentsInChildren<NoiseMeshDisplay>();
-		foreach (NoiseMeshDisplay child in children)
+		TerrainPlane[] children = GetComponentsInChildren<TerrainPlane>();
+		foreach (TerrainPlane child in children)
 		{
 			DestroyImmediate(child.gameObject);
 		}

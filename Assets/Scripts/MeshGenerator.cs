@@ -12,15 +12,7 @@ public static class NoiseMeshGenerator
 		heightCurve ??= new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1));
 
 		// Si no se pone ningun gradiente le metemos color de Negro a Blanco
-		if (gradient == null)
-		{
-			gradient = new Gradient();
-			GradientColorKey[] colors = new GradientColorKey[2]
-				{ new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) };
-			GradientAlphaKey[] alphas = new GradientAlphaKey[2]
-				{ new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) };
-			gradient.SetKeys(colors, alphas);
-		}
+		gradient ??= GetDefaultGradient();
 
 		int width = heightMap.GetLength(0);
 		int height = heightMap.GetLength(1);
@@ -28,6 +20,11 @@ public static class NoiseMeshGenerator
 		// La malla la creamos centrada en 0:
 		float initX = (width - 1) / -2f;
 		float initY = (height - 1) / -2f;
+
+		// Si el LOD no es multiplo de la anchura lo incrementamos hasta que lo sea
+		while (LOD != 0 && (width - 1) % LOD != 0)
+			LOD += 1;
+
 
 		// Incremento entre vertices para asegurar el LOD
 		int simplificationIncrement = LOD == 0 ? 1 : LOD * 2;
@@ -57,7 +54,20 @@ public static class NoiseMeshGenerator
 
 		return data;
 	}
+
+
+	public static Gradient GetDefaultGradient()
+	{
+		Gradient gradient = new Gradient();
+		GradientColorKey[] colors = new GradientColorKey[2]
+			{ new GradientColorKey(Color.black, 0), new GradientColorKey(Color.white, 1) };
+		GradientAlphaKey[] alphas = new GradientAlphaKey[2]
+			{ new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) };
+		gradient.SetKeys(colors, alphas);
+		return gradient;
+	}
 }
+
 
 
 public class MeshData
