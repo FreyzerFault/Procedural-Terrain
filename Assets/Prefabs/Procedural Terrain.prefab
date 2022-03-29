@@ -97,8 +97,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   texture: {fileID: 0}
   chunkSize: 241
-  LOD: 0
-  noiseScale: 5.96
+  LOD: 4
+  noiseScale: 6
   octaves: 4
   persistance: 0.5
   lacunarity: 2
@@ -191,7 +191,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  heightScale: 55.5
+  heightScale: 55
   offset: {x: 0, y: 0}
   autoUpdate: 1
   movement: 0

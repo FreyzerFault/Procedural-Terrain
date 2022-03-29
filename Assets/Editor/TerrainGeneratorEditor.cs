@@ -21,6 +21,7 @@ namespace Assets.Editor
 			if (GUILayout.Button("Generate Terrain"))
 			{
 				terrainGen.ClearImmediate();
+				terrainGen.Initialize();
 				terrainGen.LoadChunks();
 			}
 
@@ -28,6 +29,7 @@ namespace Assets.Editor
 			{
 				terrainGen.ClearImmediate();
 				terrainGen.ResetRandomSeed();
+				terrainGen.Initialize();
 				terrainGen.LoadChunks();
 			}
 

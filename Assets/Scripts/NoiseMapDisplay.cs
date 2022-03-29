@@ -53,7 +53,7 @@ public class NoiseMapDisplay : MonoBehaviour
 	{
 		var noiseMap =
 			noise
-			? mapGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity)
+			? NoiseMapGenerator.GetNoiseMap(width, height, NoiseScale, offset, octaves, persistance, lacunarity, seed)
 			: GetRandomMap(width, height);
 
 		TextureRenderer.sharedMaterial.mainTexture = NoiseMapGenerator.GetTexture(noiseMap, Gradient);
@@ -63,7 +63,7 @@ public class NoiseMapDisplay : MonoBehaviour
 
 	public void ResetRandomSeed()
 	{
-		seed = mapGenerator.ResetRandomSeed();
+		seed = NoiseMapGenerator.generateRandomSeed();
 	}
 
 	public float[,] GetRandomMap(int width, int height)

@@ -1,33 +1,22 @@
 using System;
 using JetBrains.Annotations;
 using UnityEngine;
+using Random = System.Random;
 
 public class NoiseMapGenerator
 {
-	// Maximo Valor segun los octavos que se use y su persistencia
-	// A medida que acumulamos los octavos el maximo sera la suma de sus amplitudes
-	private static float maxNoise = 1;
-
-	private Vector2[] octaveOffsets;
-	private int seed = DateTime.Now.Millisecond;
-	private bool seedChanged = false;
-
 	// Devuelve un Mapa de Ruido
-	public float[,] GetNoiseMap(
+	public static float[,] GetNoiseMap(
 		int width, int height, float noiseScale, Vector2 offset,
-		int numOctaves, float persistance, float lacunarity
+		int numOctaves, float persistance, float lacunarity, int seed
 		)
 	{
-		// Si los offset de los octavos no coinciden con el numero de los octavos tenemos que generarlos
-		if (octaveOffsets == null || octaveOffsets.Length != numOctaves || seedChanged)
-		{
-			octaveOffsets = GetRandomOctaveOffsets(numOctaves, seed);
-			seedChanged = false;
-		}
-
+		// Generamos los octavos con offsets distintos segun la SEED
+		Vector2[] octaveOffsets = GetRandomOctaveOffsets(numOctaves, seed);
+		
 		// Calculamos el maximo valor para luego interpolarlo a [0,1]
 		float amplitude = 1f;
-		maxNoise = 0;
+		float maxNoise = 0;
 		for (int i = 0; i < numOctaves; i++)
 		{
 			maxNoise += amplitude;
@@ -111,21 +100,7 @@ public class NoiseMapGenerator
 
 		return gradient.Evaluate(tNoiseValue);
 	}
-
-	public int ResetRandomSeed()
-	{
-		// Reseteo los offsets de los octavos para volverlos a calcular la proxima vez
-		octaveOffsets = null;
-
-		return seed = DateTime.Now.Millisecond;
-	}
-
-	public void setSeed(int s)
-	{
-		seed = s;
-		seedChanged = true;
-	}
-	public int getSeed() { return seed; }
+	
 
 	private static Vector2 GetMapCoordinates(int x, int y, int width, int height, Vector2 offset, float scale)
 	{
@@ -154,5 +129,10 @@ public class NoiseMapGenerator
 		}
 
 		return octaveOffsets;
+	}
+
+	public static int generateRandomSeed()
+	{
+		return DateTime.Now.Millisecond;
 	}
 }

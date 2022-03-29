@@ -67,8 +67,6 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	public void CreateTerrain()
 	{
-		mapGenerator.setSeed(seed);
-
 		CreateNoiseMap();
 		CreateTexture();
 		CreateMesh();
@@ -79,7 +77,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 	public void CreateNoiseMap()
 	{
 		noiseMap =
-			mapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity);
+			NoiseMapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity, seed);
 	}
 	public void CreateMesh()
 	{
@@ -124,7 +122,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	public void ResetRandomSeed()
 	{
-		seed = mapGenerator.ResetRandomSeed();
+		seed = NoiseMapGenerator.generateRandomSeed();
 	}
 
 }

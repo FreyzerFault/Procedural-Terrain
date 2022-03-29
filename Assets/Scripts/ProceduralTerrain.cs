@@ -72,7 +72,7 @@ public class ProceduralTerrain : MonoBehaviour
 		float[,] heigths = new float[width, height];
 		if (useNoise)
 		{
-			heigths = mapGenerator.GetNoiseMap(width, height, scale, offset, numOctaves, persistance, lacunarity);
+			heigths = NoiseMapGenerator.GetNoiseMap(width, height, scale, offset, numOctaves, persistance, lacunarity, seed);
 			for (int x = 0; x < width; x++)
 			for (int y = 0; y < height; y++)
 				heigths[x, y] = Mathf.InverseLerp(minHeight, maxHeight, heigths[x,y]);
@@ -89,6 +89,6 @@ public class ProceduralTerrain : MonoBehaviour
 
 	public void ResetRandomSeed()
 	{
-		seed = mapGenerator.ResetRandomSeed();
+		seed = NoiseMapGenerator.generateRandomSeed();
 	}
 }
