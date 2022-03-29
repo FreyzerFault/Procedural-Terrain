@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(
@@ -106,13 +107,14 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	private void SetTerrainCollider()
 	{
+		// Calculo del Terrain Collider a partir del noisemap
 		TerrainCollider terrainCollider = GetComponent<TerrainCollider>();
 		if (terrainCollider != null)
 		{
 			float[,] noiseCollider = new float[chunkSize, chunkSize];
 			for (int x = 0; x < chunkSize; x++)
 			for (int y = 0; y < chunkSize; y++)
-				noiseCollider[x, y] = noiseMap[x, y] * noiseScale;
+				noiseCollider[x, y] = noiseMap[x, y] * heightScale;
 
 			TerrainData data = terrainCollider.terrainData = new TerrainData();
 			data.heightmapResolution = chunkSize;

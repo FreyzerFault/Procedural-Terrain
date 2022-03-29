@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -97,7 +98,7 @@ public class TerrainGenerator : MonoBehaviour
 		);
 		return chunks[x, y] = chunk;
 	}
-
+	
 	private void CreateTerrain(Vector2 chunk)
 	{
 		OffsetTerrain(chunk);
@@ -171,19 +172,20 @@ public class TerrainGenerator : MonoBehaviour
 
 	public void Clear()
 	{
-		foreach (NoiseMeshDisplay terrain in terrains.Values)
+		NoiseMeshDisplay[] children = GetComponentsInChildren<NoiseMeshDisplay>();
+		foreach (NoiseMeshDisplay child in children)
 		{
-			Destroy(terrain.gameObject);
+			Destroy(child.gameObject);
 		}
 		terrains.Clear();
 	}
 
 	public void ClearImmediate()
 	{
-		foreach (NoiseMeshDisplay terrain in terrains.Values)
+		NoiseMeshDisplay[] children = GetComponentsInChildren<NoiseMeshDisplay>();
+		foreach (NoiseMeshDisplay child in children)
 		{
-			if (terrain != null)
-				DestroyImmediate(terrain.gameObject);
+			DestroyImmediate(child.gameObject);
 		}
 		terrains.Clear();
 	}
