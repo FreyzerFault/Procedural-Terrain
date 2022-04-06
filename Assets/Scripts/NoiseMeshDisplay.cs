@@ -17,7 +17,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 	[Range(0, 241)] public int chunkSize = 241;
 	[Range(0, 6)] public int LOD = 1;
 	
-	public float noiseScale = .3f;
+	[Range(0,40)] public float noiseScale = .3f;
 
 	[Range(1, 10)] public int octaves = 1;
 	[Range(0, 1)] public float persistance = 1f;
