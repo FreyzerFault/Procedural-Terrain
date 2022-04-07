@@ -51,7 +51,7 @@ public class TerrainPlane : MonoBehaviour
 		GenerateCollider();
 
 		// Actualizamos su altura escalandola
-		transform.localScale = new Vector3(1, HeightScale, 1);
+		//transform.localScale = new Vector3(1, HeightScale, 1);
 	}
 
 	// Actualiza el LOD cambiando solo la Malla
@@ -74,12 +74,12 @@ public class TerrainPlane : MonoBehaviour
 		MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
 		texture = NoiseMapGenerator.GetTexture(noiseMap, p.gradient);
 		meshRenderer.material.mainTexture = texture;
-		meshRenderer.transform.localScale = new Vector3(p.width, 1, p.height);
+		//meshRenderer.transform.localScale = new Vector3(p.width, 1, p.height);
 	}
 
 	public void GenerateMeshData()
 	{
-		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, p.LOD, p.heightCurve, p.gradient);
+		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, p.HeightScale, p.heightCurve, p.LOD, p.gradient);
 	}
 
 	public void UpdateMesh()

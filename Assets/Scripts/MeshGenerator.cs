@@ -7,8 +7,13 @@ public static class NoiseMeshGenerator
 	// No generamos la Mesh en este metodo
 	// Porque Generar una MESH tiene la limitacion de que no se puede hacer multithreading
 	// Por lo que este proceso se puede hacer en hilos
-	public static MeshData GenerateTerrainMesh(float[,] heightMap, int LOD = 0, AnimationCurve heightCurve = null, Gradient gradient = null)
+	public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve = null, int LOD = 0, Gradient gradient = null)
 	{
+		// Evaluar una Curva tiene problemas con el paralelismo
+		// asi que si creamos una curva por cada hilo en vez de reutilizarla
+		// podemos evitar bloquear el hilo:
+		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
+
 		heightCurve ??= new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1));
 
 		// Si no se pone ningun gradiente le metemos color de Negro a Blanco
@@ -36,7 +41,7 @@ public static class NoiseMeshGenerator
 		for (int y = 0; y < height; y += simplificationIncrement)
 		for (int x = 0; x < width; x += simplificationIncrement)
 		{
-			data.vertices[vertIndex] = new Vector3(initX + x, heightCurve.Evaluate(heightMap[x,y]), initY + y);
+			data.vertices[vertIndex] = new Vector3(initX + x, heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier, initY + y);
 			data.uvs[vertIndex] = new Vector2((float)x / width, (float)y / height);
 			data.colors[vertIndex] = gradient.Evaluate(heightMap[x, y]);
 

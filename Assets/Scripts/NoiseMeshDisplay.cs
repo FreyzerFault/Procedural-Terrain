@@ -70,7 +70,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 		CreateNoiseMap();
 		CreateTexture();
 		CreateMesh();
-		AdjustHeightScale();
+		//AdjustHeightScale();
 		SetTerrainCollider();
 	}
 
@@ -81,7 +81,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 	}
 	public void CreateMesh()
 	{
-		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, LOD, heightCurve, gradient);
+		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, heightScale, heightCurve, LOD, gradient);
 		
 		GetComponent<MeshFilter>().mesh = meshData.CreateMesh();
 	}
