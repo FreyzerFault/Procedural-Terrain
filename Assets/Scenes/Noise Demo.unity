@@ -468,4 +468,5 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   autoUpdate: 1
   movement: 1
+  speed: 0.218
   TextureRenderer: {fileID: 1902554975}
