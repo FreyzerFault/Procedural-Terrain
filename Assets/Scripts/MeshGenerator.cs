@@ -9,12 +9,15 @@ public static class NoiseMeshGenerator
 	// Por lo que este proceso se puede hacer en hilos
 	public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier, AnimationCurve _heightCurve = null, int LOD = 0, Gradient gradient = null)
 	{
+		AnimationCurve heightCurve;
+
 		// Evaluar una Curva tiene problemas con el paralelismo
 		// asi que si creamos una curva por cada hilo en vez de reutilizarla
 		// podemos evitar bloquear el hilo:
-		AnimationCurve heightCurve = new AnimationCurve(_heightCurve.keys);
-
-		heightCurve ??= new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1));
+		if (_heightCurve != null)
+			heightCurve = new AnimationCurve(_heightCurve.keys);
+		else
+			heightCurve = new AnimationCurve(new Keyframe(0, 0), new Keyframe(1, 1));
 
 		// Si no se pone ningun gradiente le metemos color de Negro a Blanco
 		gradient ??= GetDefaultGradient();
@@ -39,23 +42,21 @@ public static class NoiseMeshGenerator
 
 		int vertIndex = 0;
 		for (int y = 0; y < height; y += simplificationIncrement)
-		for (int x = 0; x < width; x += simplificationIncrement)
-		{
-			data.vertices[vertIndex] = new Vector3(initX + x, heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier, initY + y);
-			data.uvs[vertIndex] = new Vector2((float)x / width, (float)y / height);
-			data.colors[vertIndex] = gradient.Evaluate(heightMap[x, y]);
-
-			// Ignorando la ultima fila y columna de vertices, añadimos los triangulos
-			if (x < width - 1 && y < height - 1)
+			for (int x = 0; x < width; x += simplificationIncrement)
 			{
-				//data.AddTriangle(vertIndex, vertIndex + verticesPerLine + 1, vertIndex + verticesPerLine);
-				//data.AddTriangle(vertIndex + verticesPerLine + 1, vertIndex, vertIndex + 1);
-				data.AddTriangle(vertIndex, vertIndex + verticesPerLine, vertIndex + verticesPerLine + 1);
-				data.AddTriangle(vertIndex + verticesPerLine + 1, vertIndex + 1, vertIndex);
-			}
+				data.vertices[vertIndex] = new Vector3(initX + x, heightCurve.Evaluate(heightMap[x, y]) * heightMultiplier, initY + y);
+				data.uvs[vertIndex] = new Vector2((float)x / width, (float)y / height);
+				data.colors[vertIndex] = gradient.Evaluate(heightMap[x, y]);
 
-			vertIndex++;
-		}
+				// Ignorando la ultima fila y columna de vertices, añadimos los triangulos
+				if (x < width - 1 && y < height - 1)
+				{
+					data.AddTriangle(vertIndex, vertIndex + verticesPerLine, vertIndex + verticesPerLine + 1);
+					data.AddTriangle(vertIndex + verticesPerLine + 1, vertIndex + 1, vertIndex);
+				}
+
+				vertIndex++;
+			}
 
 		return data;
 	}

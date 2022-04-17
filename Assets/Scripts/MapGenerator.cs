@@ -25,21 +25,27 @@ public class MapGenerator : MonoBehaviour
 
 	public bool autoUpdate = true;
 
-
-	private float[,] noiseMap;
-	private Texture2D texture;
+	
 	private MeshData meshData;
 
 
 	public struct MapData
 	{
 		public readonly float[,] noiseMap;
-		public readonly Texture2D texture;
+		public readonly Color[] textureData;
 
-		public MapData(float[,] noiseMap, Texture2D texture, MeshData meshData)
+		public MapData(float[,] noiseMap, Color[] textureData, MeshData meshData)
 		{
 			this.noiseMap = noiseMap;
-			this.texture = texture;
+			this.textureData = textureData;
+		}
+
+		public Texture2D GetTexture2D()
+		{
+			Texture2D texture = new Texture2D(noiseMap.GetLength(0), noiseMap.GetLength(1));
+			texture.SetPixels(textureData);
+			texture.Apply();
+			return texture;
 		}
 	}
 
@@ -66,16 +72,18 @@ public class MapGenerator : MonoBehaviour
 	public MapData GenerateMapData()
 	{
 		// MAPA DE RUIDO
-		noiseMap = NoiseMapGenerator.GetNoiseMap(
+		float[,] noiseMap = NoiseMapGenerator.GetNoiseMap(
 			mapChunkSize, mapChunkSize, noiseScale, offset,
 			numOctaves, persistance, lacunarity, seed
 		);
+
+		Color[] textureData = NoiseMapGenerator.GetTextureData(noiseMap, gradient);
 
 		// Generamos el array de color
 		//texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
 		//meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, meshHeightMultiplier, meshHeightCurve, LOD, gradient);
 
-		return mapData = new MapData(noiseMap, null, meshData);
+		return mapData = new MapData(noiseMap, textureData, meshData);
 	}
 
 	// Paraleliza la Creacion del Mapa de Ruido
@@ -151,6 +159,7 @@ public class MapGenerator : MonoBehaviour
 		Renderer textureRenderer = GetComponent<Renderer>();
 		if (textureRenderer)
 		{
+			Texture2D texture = mapData.GetTexture2D();
 			textureRenderer.material.mainTexture = texture;
 			textureRenderer.transform.localScale = new Vector3(texture.width, 1, texture.height);
 		}
@@ -167,6 +176,7 @@ public class MapGenerator : MonoBehaviour
 
 		if (meshFilter && meshRenderer)
 		{
+			Texture2D texture = mapData.GetTexture2D();
 			meshFilter.sharedMesh = meshData.CreateMesh();
 			meshRenderer.material.mainTexture = texture;
 			//transform.localScale = new Vector3(1, meshHeightMultiplier, 1);

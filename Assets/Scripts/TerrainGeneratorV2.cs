@@ -65,12 +65,16 @@ public class TerrainGeneratorV2 : MonoBehaviour
 			// Si no existe el chunk se genera y se añade
 			if (!chunkDictionary.ContainsKey(chunkCoords))
 			{
-				chunkDictionary.Add(chunkCoords, new TerrainChunk(chunkCoords, chunkSize, transform, mapMaterial));
+				chunkDictionary.Add(
+					chunkCoords,
+					new TerrainChunk(chunkCoords, chunkSize, transform, mapMaterial)
+					);
 			}
 
 			// Actualizamos el chunk
 			TerrainChunk chunk = chunkDictionary[chunkCoords];
 			chunk.Update();
+
 			// Y si es visible recordarlo para hacerlo invisible cuando se escape del rango de renderizado
 			if (chunk.visible)
 				chunkLastVisible.Add(chunk);
@@ -105,12 +109,16 @@ public class TerrainGeneratorV2 : MonoBehaviour
 			meshObject.transform.position = position3D;
 			meshObject.transform.parent = parent;
 
+			mapGenerator.offset = chunkCoord * mapGenerator.noiseScale;
+
 			mapGenerator.RequestMapData(OnMapDataReceived);
 		}
 
 		// Cuando reciba los datos del MAPA de ruido pide la MALLA
 		void OnMapDataReceived(MapGenerator.MapData mapData)
 		{
+			meshRenderer.material.mainTexture = mapData.GetTexture2D();
+
 			mapGenerator.RequestMeshData(mapData, OnMeshDataReceived);
 		}
 

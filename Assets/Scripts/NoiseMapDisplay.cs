@@ -30,7 +30,8 @@ public class NoiseMapDisplay : MonoBehaviour
 
 	public bool autoUpdate;
 	public bool movement;
-	[Range(0,1)] public float speed;
+	[Range(0,10)] public float speed = 1;
+	[Range(0, 10)] public float movementRadius = 1;
 
 	public Renderer TextureRenderer;
 
@@ -41,10 +42,17 @@ public class NoiseMapDisplay : MonoBehaviour
 		GenerateTexture();
 	}
 
+	private float angle = 0;
+
 	void Update()
 	{
 		if (movement)
-			offset.y -= Time.deltaTime * speed;
+		{
+			angle += Time.deltaTime * speed;
+
+			offset.x = Mathf.Cos(angle) * movementRadius;
+			offset.y = Mathf.Sin(angle) * movementRadius;
+		}
 
 		GenerateTexture();
 	}

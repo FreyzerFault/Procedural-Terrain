@@ -28,7 +28,7 @@ public class Player : MonoBehaviour
 		if (Input.GetKey(KeyCode.D))
 			move = transform.right;
 
-		rb.AddForce(move);
-
+		//rb.AddForce(move);
+		transform.position += move * Time.deltaTime * 1000;
 	}
 }

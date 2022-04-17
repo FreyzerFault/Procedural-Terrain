@@ -68,22 +68,51 @@ public class NoiseMapGenerator
 
 	public static Texture2D GetTexture(float[,] noiseMap, [CanBeNull] Gradient gradient = null)
 	{
-		// Si no se pasa un Gradiente se utiliza uno basico entre Negro y Blanco
-		gradient ??= NoiseMeshGenerator.GetDefaultGradient();
-
 		int width = noiseMap.GetLength(0), height = noiseMap.GetLength(1);
 
 		Texture2D texture = new Texture2D(width, height);
 
-		// Coloreamos la textura segun el mapa
-		for (int x = 0; x < width; x++)
-		for (int y = 0; y < height; y++)
+		texture.SetPixels(GetTextureData(noiseMap, gradient));
+
+		return texture;
+	}
+
+	public static Color[] GetTextureData(float[,] noiseMap, [CanBeNull] Gradient _gradient = null)
+	{
+		Gradient gradient = new Gradient();
+		if (_gradient == null)
 		{
-			texture.SetPixel(x, y, heightToColor(noiseMap[x, y], gradient));
+			gradient.alphaKeys = new GradientAlphaKey[2];
+			gradient.colorKeys = new GradientColorKey[2];
+			gradient.alphaKeys.SetValue(new GradientAlphaKey(1, 0), 0);
+			gradient.alphaKeys.SetValue(new GradientAlphaKey(1, 1), 1);
+			gradient.colorKeys.SetValue(new GradientColorKey(Color.black, 0), 0);
+			gradient.colorKeys.SetValue(new GradientColorKey(Color.white, 1), 1);
+		}
+		else
+		{
+			// Evaluar una Curva tiene problemas con el paralelismo
+			// asi que si creamos una curva por cada hilo en vez de reutilizarla
+			// podemos evitar bloquear el hilo:
+			gradient.alphaKeys = _gradient.alphaKeys;
+			gradient.colorKeys = _gradient.colorKeys;
 		}
 
-		texture.Apply();
-		return texture;
+		// Si no se pasa un Gradiente se utiliza uno basico entre Negro y Blanco
+		gradient ??= NoiseMeshGenerator.GetDefaultGradient();
+
+		int width = noiseMap.GetLength(0), height = noiseMap.GetLength(1);
+		
+		Color[] texColors = new Color[width * height];
+
+		// Coloreamos la textura segun el mapa
+		for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; x++)
+		{
+			texColors[y * width + x] = heightToColor(noiseMap[x, y], gradient);
+		}
+
+		return texColors;
 	}
 
 	public static Color heightToColor(float height, Gradient gradient, float min = 0, float max = 1)

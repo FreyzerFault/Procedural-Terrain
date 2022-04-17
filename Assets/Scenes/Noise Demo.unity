@@ -429,18 +429,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 241
   height: 241
-  NoiseScale: 9.22
-  offset: {x: 12.33, y: -3.08}
+  NoiseScale: 7.51
+  offset: {x: 77.4, y: 6.5}
   maxHeight: 1
   minHeight: 0
-  octaves: 4
+  octaves: 3
   persistance: 0.5
   lacunarity: 2
-  seed: 983
+  seed: 355
   Gradient:
     serializedVersion: 2
-    key0: {r: 0, g: 0.17432474, b: 0.3584906, a: 1}
-    key1: {r: 0.097058825, g: 0.53642994, b: 1, a: 1}
+    key0: {r: 0, g: 0, b: 0, a: 1}
+    key1: {r: 1, g: 1, b: 1, a: 1}
     key2: {r: 0.8235295, g: 0.81568635, b: 0.48627454, a: 0}
     key3: {r: 0.33333334, g: 0.5921569, b: 0.08627451, a: 0}
     key4: {r: 0.25490198, g: 0.41960788, b: 0.08627451, a: 0}
@@ -448,7 +448,7 @@ MonoBehaviour:
     key6: {r: 0.29411766, g: 0.23529413, b: 0.21176472, a: 0}
     key7: {r: 1, g: 1, b: 1, a: 0}
     ctime0: 0
-    ctime1: 21010
+    ctime1: 65535
     ctime2: 25250
     ctime3: 29684
     ctime4: 36237
@@ -464,9 +464,10 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_NumColorKeys: 8
+    m_NumColorKeys: 2
     m_NumAlphaKeys: 2
   autoUpdate: 1
   movement: 1
-  speed: 0.218
+  speed: 1.41
+  movementRadius: 1.41
   TextureRenderer: {fileID: 1902554975}
