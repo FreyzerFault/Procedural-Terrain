@@ -87,9 +87,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 	}
 	public void CreateTexture()
 	{
-		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
-		
-		GetComponent<MeshRenderer>().material.mainTexture = texture;
+		GetComponent<MeshRenderer>().sharedMaterial.mainTexture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
 	}
 
 	public void AdjustHeightScale()
