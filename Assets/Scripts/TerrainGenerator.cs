@@ -1,227 +1,243 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using System.Threading;
+using System.Collections.Generic;
 
+/**
+ * <para>Generador Procedural de Terreno</para>
+ *
+ * <para>Genera el Terreno a partir de un Mapa de Ruido.
+ * Con su malla, su textura y su malla de colisión</para>
+ *
+ * <para>Utiliza Threading y colas de peticiones
+ * para la creación del mapa de ruido y la malla</para>
+ */
 public class TerrainGenerator : MonoBehaviour
 {
-	public Transform Player;
-	public GameObject TerrainPrefab;
+	// Anchura y Altura del terreno (num de vertices)
+	public int mapChunkSize = 241;
+	[Range(0, 6)] public int lod;
+	public float noiseScale = 5f;
 
-	public int chunkSize = 241;
-
-	// Distancia desde el chunk central al borde
-	public int renderDistance = 6;
-
-	public int maxLOD = 6;
+	// Mejora con Octavos
+	[Range(1, 10)] public int numOctaves = 3;
+	[Range(0, 1)] public float persistance = 0.5f;
+	[Range(1, 5)] public float lacunarity = 2;
 	
-	[Serializable]
-	public class NoiseParameters
+	/// Offset en el mapa de ruido
+	public Vector2 offset = Vector2.zero;
+
+	public int seed = DateTime.Now.Millisecond;
+
+	[Range(0.01f, 200f)] public float meshHeightMultiplier = 100;
+	
+	public AnimationCurve meshHeightCurve = new AnimationCurve();
+	public Gradient gradient = new Gradient();
+	
+	public bool autoUpdate = true;
+
+	private MeshData meshData;
+
+
+	public struct MapData
 	{
-		public Vector2 offset = new Vector2(0, 0);
+		public readonly float[,] noiseMap;
+		public readonly Color[] textureData;
 
-		public float noiseScale = 5f;
+		public MapData(float[,] noiseMap, Color[] textureData, MeshData meshData)
+		{
+			this.noiseMap = noiseMap;
+			this.textureData = textureData;
+		}
 
-		[Range(1, 10)] public int octaves = 3;
-		[Range(0, 1)] public float persistance = .5f;
-		[Range(1, 5)] public float lacunarity = 2f;
-
-		[Space]
-
-		public Gradient gradient = new Gradient();
-		public AnimationCurve heightCurve = new AnimationCurve();
-
-		[Range(0.01f, 100f)] public float heightScale = 50f;
-
-		public int seed = DateTime.Now.Millisecond;
+		public Texture2D GetTexture2D()
+		{
+			Texture2D texture = new Texture2D(noiseMap.GetLength(0), noiseMap.GetLength(1));
+			texture.SetPixels(textureData);
+			texture.Apply();
+			return texture;
+		}
 	}
 
-	[InspectorName("Noise Parameters")]
-	public NoiseParameters np = new NoiseParameters();
 
-	private Vector2[,] chunksRendered;
+	// THREADING:
 
-	private Vector2 playerChunk = new Vector2(0,0);
+	// Colas en las que se guarda la info de los hilos para ejecutarlos conforme le vengan
+	private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+	private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
 
-	private Dictionary<Vector2, TerrainPlane> terrains = new Dictionary<Vector2, TerrainPlane>();
-
-	// Start is called before the first frame update
-	void Start()
+	/// <summary>
+	///  Información de un Hilo: callback que se tiene que ejecutar con el parametro que devuelve
+	/// </summary>
+	/// <typeparam name="T">Resultado que devuelve el Hilo</typeparam>
+	private struct MapThreadInfo<T>
 	{
-		Clear();
-		LoadChunks();
+		// Se ejecuta despues del hilo:
+		public readonly Action<T> callback;
+		// Parametro devuelto por el hilo que usa el callback como argumento:
+		public readonly T parameter;
+
+		public MapThreadInfo(Action<T> callback, T parameter)
+		{
+			this.callback = callback;
+			this.parameter = parameter;
+		}
 	}
 
-	// Update is called once per frame
+	public MapData mapData;
+
+	public MapData GenerateMapData()
+	{
+		// MAPA DE RUIDO
+		float[,] noiseMap = NoiseMapGenerator.GetNoiseMap(
+			mapChunkSize, mapChunkSize, noiseScale, offset,
+			numOctaves, persistance, lacunarity, seed
+		);
+
+		Color[] textureData = NoiseMapGenerator.GetTextureData(noiseMap, gradient);
+
+		return mapData = new MapData(noiseMap, textureData, meshData);
+	}
+
+	// Paraleliza la Creacion del Mapa de Ruido
+	public void RequestMapData(Action<MapData> callback)
+	{
+		ThreadStart threadStart = delegate
+		{
+			MapDataThread(callback);
+		};
+
+		new Thread(threadStart).Start();
+	}
+
+	// Proceso de creacion de MapData paralelizable
+	void MapDataThread(Action<MapData> callback)
+	{
+		// Crea la MapData
+		MapData mapData = GenerateMapData();
+
+		// Hace inaccesible la Cola cuando esta en esta linea de codigo para no pisarse entre hilos
+		lock (mapDataThreadInfoQueue) {
+			mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
+		}
+	}
+
+	// Paraleliza la Creacion de la Malla de Alturas
+	public void RequestMeshData(MapData mapData, Action<MeshData> callback)
+	{
+		ThreadStart threadStart = delegate
+		{
+			MeshDataThread(mapData, callback);
+		};
+
+		new Thread(threadStart).Start();
+	}
+
+	// Proceso de creacion de la Malla en un hilo
+	void MeshDataThread(MapData mapData, Action<MeshData> callback)
+	{
+		// Crea la Malla
+		MeshData meshData = NoiseMeshGenerator.GenerateTerrainMesh(mapData.noiseMap, meshHeightMultiplier, meshHeightCurve, lod, gradient);
+
+		// Hace inaccesible la Cola cuando esta en esta linea de codigo para no pisarse entre hilos
+		lock (meshDataThreadInfoQueue)
+		{
+			meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
+		}
+	}
+
 	void Update()
 	{
-		// Cuando cambie de chunk recalculamos to
-		if (playerChunk != getChunk(Player.position))
+		// Ejecuta todos los callbacks guardados en la cola con los parametros que devolvieron los hilos
+		if (mapDataThreadInfoQueue.Count > 0)
 		{
-			LoadChunks();
-			UpdateLODs();
-		}
-
-		Vector2 playerPosition = getLocalPos(Player.position);
-	}
-
-	// Load ALL chunks (Update if no need to Create)
-	public void LoadChunks()
-	{
-		if (Player == null)
-			Player = GameObject.FindGameObjectWithTag("Player").transform;
-
-		playerChunk = getChunk(Player.position);
-
-		int borderLength = GetBorderLength();
-
-		chunksRendered = new Vector2[borderLength,borderLength];
-
-		// Volvemos a generar los chunks con distinto LOD segun su distancia
-		for (int x = 0; x < borderLength; x++)
-		for (int y = 0; y < borderLength; y++)
-		{
-			Vector2 chunk = CreateChunk(x,y);
-
-			// Si ya esta cargado actualizamos su LOD y su malla solamente
-			if (terrains.ContainsKey(chunk))
+			for (int i = 0; i < mapDataThreadInfoQueue.Count; i++)
 			{
-				UpdateLOD(chunk);
+				MapThreadInfo<MapData> threadInfo = mapDataThreadInfoQueue.Dequeue();
+				threadInfo.callback(threadInfo.parameter);
 			}
-			else
+		}
+		if (meshDataThreadInfoQueue.Count > 0)
+		{
+			for (int i = 0; i < meshDataThreadInfoQueue.Count; i++)
 			{
-				GenerateTerrain(chunk);
+				MapThreadInfo<MeshData> threadInfo = meshDataThreadInfoQueue.Dequeue();
+				threadInfo.callback(threadInfo.parameter);
 			}
 		}
 	}
 
-	// Update ALL chunks
-	public void UpdateLODs()
+	// DRAWS:
+	public void DrawTexture()
 	{
-		playerChunk = getChunk(Player.position);
-
-		foreach (var it in terrains)
+		Renderer textureRenderer = GetComponent<Renderer>();
+		if (textureRenderer)
 		{
-			it.Value.UpdateLOD(GetLOD(it.Key));
+			Texture2D texture = mapData.GetTexture2D();
+			textureRenderer.material.mainTexture = texture;
+			textureRenderer.transform.localScale = new Vector3(texture.width, 1, texture.height);
+		}
+		else
+		{
+			Debug.LogWarning("Se quiere dibujar una textura en un objeto sin Renderer");
 		}
 	}
 
+	public void DrawMesh()
+	{
+		MeshFilter meshFilter = GetComponent<MeshFilter>();
+		MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
 
-	private Vector2 CreateChunk(int x, int y)
-	{
-		Vector2 chunk = new Vector2(
-			x - renderDistance + playerChunk.x,
-			y - renderDistance + playerChunk.y
-		);
-		return chunksRendered[x, y] = chunk;
-	}
-	
-	private void GenerateTerrain(Vector2 chunk)
-	{
-		Vector2 globalPos = getGlobalPos(chunk);
-
-		terrains.Add(
-			chunk,
-			Instantiate(
-				TerrainPrefab,
-				new Vector3(globalPos.x, 0, globalPos.y),
-				Quaternion.identity,
-				transform
-			).GetComponent<TerrainPlane>()
-		);
-
-		terrains[chunk].Generate(
-			chunkSize, chunkSize, np.noiseScale, GetOffset(chunk),
-			np.octaves, np.persistance, np.lacunarity, np.seed,
-			np.heightScale, GetLOD(chunk), np.heightCurve, np.gradient);
-	}
-
-	private void UpdateLOD(Vector2 chunk)
-	{
-		TerrainPlane terrain = terrains[chunk];
-		terrain.UpdateLOD(GetLOD(chunk));
-	}
-
-	// Parametros que dependen del Area de Chunks Renderizados segun la posicion del Player
-	// Longitud del Borde de los chunks, que sera el tama�o de mi matriz de Chunks Renderizados
-	private int GetBorderLength()
-	{
-		return renderDistance * 2 + 1;
-	}
-
-	// Parametros que dependen del Chunk:
-	// Level Of Detail
-	public int GetLOD(Vector2 chunk)
-	{
-		int LOD = Mathf.FloorToInt((chunk - playerChunk).magnitude);
-		return LOD;
-	}
-	// Noise Offset
-	public Vector2 GetOffset(Vector2 chunk)
-	{
-		return chunk * np.noiseScale;
-	}
-
-
-
-	// =========================================================
-	// Transformaciones de Espacio de Mundo al Espacio del Chunk:
-	
-	Vector2 getChunk(Vector2 pos)
-	{
-		return new Vector2(
-			Mathf.Round(pos.x / chunkSize),
-			Mathf.Round(pos.y / chunkSize)
-		);
-	}
-	Vector2 getChunk(Vector3 pos)
-	{
-		return new Vector2(
-			Mathf.Round(pos.x / chunkSize),
-			Mathf.Round(pos.z / chunkSize)
-		);
-	}
-	
-	Vector2 getLocalPos(Vector2 pos)
-	{
-		return pos - getGlobalPos(getChunk(pos));
-	}
-	Vector2 getLocalPos(Vector3 pos)
-	{
-		return new Vector2(pos.x, pos.z) - getGlobalPos(getChunk(pos));
-	}
-
-	// Posicion del Chunk en el Espacio de Mundo
-	Vector2 getGlobalPos(Vector2 chunkPos)
-	{
-		return chunkPos * (new Vector2(chunkSize - 1, chunkSize - 1));
-	}
-
-	// Resetea la Semilla de forma Aleatoria
-	public void ResetRandomSeed()
-	{
-		np.seed = NoiseMapGenerator.generateRandomSeed();
-	}
-
-	// Borra todos los terrenos renderizados
-	public void Clear()
-	{
-		NoiseMeshDisplay[] children = GetComponentsInChildren<NoiseMeshDisplay>();
-		foreach (NoiseMeshDisplay child in children)
+		if (meshFilter && meshRenderer)
 		{
-			Destroy(child.gameObject);
+			Texture2D texture = mapData.GetTexture2D();
+			meshFilter.sharedMesh = meshData.CreateMesh();
+			meshRenderer.material.mainTexture = texture;
+			//transform.localScale = new Vector3(1, meshHeightMultiplier, 1);
 		}
-		terrains.Clear();
+		else
+		{
+			Debug.LogWarning("Se quiere crear una malla con una textura en un objeto que le falta MeshFilter o MeshRenderer");
+		}
 	}
 
-	// Borra todos los terrenos renderizados
-	public void ClearImmediate()
+	public void ResetSeed()
 	{
-		TerrainPlane[] children = GetComponentsInChildren<TerrainPlane>();
-		foreach (TerrainPlane child in children)
+		seed = NoiseMapGenerator.generateRandomSeed();
+	}
+}
+
+[CustomEditor(typeof(TerrainGenerator))]
+public class MapGeneratorEditor : UnityEditor.Editor
+{
+	public override void OnInspectorGUI()
+	{
+		TerrainGenerator terrainGen = target as TerrainGenerator;
+		if (terrainGen == null)
 		{
-			DestroyImmediate(child.gameObject);
+			Debug.Log("No existe ningun objeto MapGenerator al que modificar su editor en el inspector");
+			return;
 		}
-		terrains.Clear();
+
+		if (DrawDefaultInspector() && terrainGen.autoUpdate)
+		{
+			terrainGen.GenerateMapData();
+			terrainGen.DrawMesh();
+		}
+
+		// Boton para generar el mapa
+		if (GUILayout.Button("Generate Terrain"))
+		{
+			terrainGen.GenerateMapData();
+			terrainGen.DrawMesh();
+		}
+
+		if (GUILayout.Button("Reset Seed"))
+		{
+			terrainGen.ResetSeed();
+			terrainGen.GenerateMapData();
+			terrainGen.DrawMesh();
+		}
 	}
 }

@@ -3,13 +3,13 @@ using UnityEngine;
 
 namespace Assets.Editor
 {
-	[CustomEditor(typeof(TerrainGenerator))]
+	[CustomEditor(typeof(TerrainChunkGeneratorV1))]
 	public class TerrainGeneratorEditor : UnityEditor.Editor
 	{
 		public override void OnInspectorGUI()
 		{
-			TerrainGenerator terrainGen = target as TerrainGenerator;
-			if (terrainGen == null)
+			TerrainChunkGeneratorV1 terrainChunkGen = target as TerrainChunkGeneratorV1;
+			if (terrainChunkGen == null)
 			{
 				Debug.Log("No existe ningun objeto TerrainGenerator al que modificar su editor en el inspector");
 				return;
@@ -20,20 +20,20 @@ namespace Assets.Editor
 			// Boton para generar el mapa
 			if (GUILayout.Button("Generate Terrain"))
 			{
-				terrainGen.ClearImmediate();
-				terrainGen.LoadChunks();
+				terrainChunkGen.ClearImmediate();
+				terrainChunkGen.LoadChunks();
 			}
 
 			if (GUILayout.Button("Reset Seed"))
 			{
-				terrainGen.ClearImmediate();
-				terrainGen.ResetRandomSeed();
-				terrainGen.LoadChunks();
+				terrainChunkGen.ClearImmediate();
+				terrainChunkGen.ResetRandomSeed();
+				terrainChunkGen.LoadChunks();
 			}
 
 			if (GUILayout.Button("Clear"))
 			{
-				terrainGen.ClearImmediate();
+				terrainChunkGen.ClearImmediate();
 			}
 		}
 	}

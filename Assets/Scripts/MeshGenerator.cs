@@ -48,7 +48,7 @@ public static class NoiseMeshGenerator
 				data.uvs[vertIndex] = new Vector2((float)x / width, (float)y / height);
 				data.colors[vertIndex] = gradient.Evaluate(heightMap[x, y]);
 
-				// Ignorando la ultima fila y columna de vertices, añadimos los triangulos
+				// Ignorando la ultima fila y columna de vertices, aÃ±adimos los triangulos
 				if (x < width - 1 && y < height - 1)
 				{
 					data.AddTriangle(vertIndex, vertIndex + verticesPerLine, vertIndex + verticesPerLine + 1);
@@ -62,6 +62,7 @@ public static class NoiseMeshGenerator
 	}
 
 
+	// Gradiente por defecto [negro -> blanco] [0,1]
 	public static Gradient GetDefaultGradient()
 	{
 		Gradient gradient = new Gradient();

@@ -87,7 +87,8 @@ public class NoiseMeshDisplay : MonoBehaviour
 	}
 	public void CreateTexture()
 	{
-		GetComponent<MeshRenderer>().sharedMaterial.mainTexture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
+		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
+		GetComponent<MeshRenderer>().sharedMaterial.mainTexture = texture;
 	}
 
 	public void AdjustHeightScale()
@@ -105,7 +106,7 @@ public class NoiseMeshDisplay : MonoBehaviour
 	{
 		// Calculo del Terrain Collider a partir del noisemap
 		TerrainCollider terrainCollider = GetComponent<TerrainCollider>();
-		if (terrainCollider != null)
+		if (terrainCollider)
 		{
 			float[,] noiseCollider = new float[chunkSize, chunkSize];
 			for (int x = 0; x < chunkSize; x++)
