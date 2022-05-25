@@ -8,8 +8,8 @@ using UnityEngine;
 )]
 public class NoiseMeshDisplay : MonoBehaviour
 {
-	public MeshData meshData;
-	public Texture2D texture;
+	private MeshData meshData;
+	private Texture2D texture;
 
 
 	[Space]
@@ -62,7 +62,6 @@ public class NoiseMeshDisplay : MonoBehaviour
 			CreateTerrain();
 			offset.x += Time.deltaTime * speed;
 		}
-
 	}
 
 	public void CreateTerrain()
@@ -74,18 +73,20 @@ public class NoiseMeshDisplay : MonoBehaviour
 		SetTerrainCollider();
 	}
 
-	public void CreateNoiseMap()
+	private void CreateNoiseMap()
 	{
 		noiseMap =
 			NoiseMapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity, seed);
 	}
-	public void CreateMesh()
+
+	private void CreateMesh()
 	{
 		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, heightScale, heightCurve, LOD, gradient);
 		
 		GetComponent<MeshFilter>().mesh = meshData.CreateMesh();
 	}
-	public void CreateTexture()
+
+	private void CreateTexture()
 	{
 		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
 		GetComponent<MeshRenderer>().sharedMaterial.mainTexture = texture;
@@ -98,7 +99,8 @@ public class NoiseMeshDisplay : MonoBehaviour
 
 	public void UpdateLOD(Vector2 playerWorldPos)
 	{
-		Vector2 terrainWorldPos = new Vector2(transform.position.x, transform.position.z);
+		var position = transform.position;
+		Vector2 terrainWorldPos = new Vector2(position.x, position.z);
 		LOD = Mathf.FloorToInt((terrainWorldPos - playerWorldPos).magnitude / chunkSize);
 	}
 

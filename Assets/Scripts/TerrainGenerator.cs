@@ -13,10 +13,12 @@ using System.Collections.Generic;
  * <para>Utiliza Threading y colas de peticiones
  * para la creación del mapa de ruido y la malla</para>
  */
+[ExecuteAlways]
 public class TerrainGenerator : MonoBehaviour
 {
 	// Anchura y Altura del terreno (num de vertices)
-	public int mapChunkSize = 241;
+	[Range(100,240)]
+	public int chunkSize = 241;
 	[Range(0, 6)] public int lod;
 	public float noiseScale = 5f;
 
@@ -25,8 +27,7 @@ public class TerrainGenerator : MonoBehaviour
 	[Range(0, 1)] public float persistance = 0.5f;
 	[Range(1, 5)] public float lacunarity = 2;
 	
-	/// Offset en el mapa de ruido
-	public Vector2 offset = Vector2.zero;
+	public Vector2 offset = Vector2.zero; 
 
 	public int seed = DateTime.Now.Millisecond;
 
@@ -37,15 +38,13 @@ public class TerrainGenerator : MonoBehaviour
 	
 	public bool autoUpdate = true;
 
-	private MeshData meshData;
 
-
-	public struct MapData
+	public readonly struct MapData
 	{
 		public readonly float[,] noiseMap;
-		public readonly Color[] textureData;
+		private readonly Color[] textureData;
 
-		public MapData(float[,] noiseMap, Color[] textureData, MeshData meshData)
+		public MapData(float[,] noiseMap, Color[] textureData)
 		{
 			this.noiseMap = noiseMap;
 			this.textureData = textureData;
@@ -60,18 +59,57 @@ public class TerrainGenerator : MonoBehaviour
 		}
 	}
 
+	private void Update()
+	{
+		UpdateThreadQueues();
+	}
 
-	// THREADING:
 
-	// Colas en las que se guarda la info de los hilos para ejecutarlos conforme le vengan
-	private Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
-	private Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+	/// <summary>
+	/// Genera los datos del Mapa de Ruido/Altura a partir de los parametros que definen el Perlin Noise
+	/// y un Gradiente para la Textura
+	/// </summary>
+	/// <returns>Los datos del Mapa de Ruido/Altura y de la Textura</returns>
+	public MapData GenerateMapData(Vector2? noiseOffset = null)
+	{
+		noiseOffset ??= this.offset;
+		
+		// MAPA DE RUIDO
+		float[,] noiseMap = NoiseMapGenerator.GetNoiseMap(
+			chunkSize, chunkSize, noiseScale, (Vector2) noiseOffset,
+			numOctaves, persistance, lacunarity, seed
+		);
 
+		// TEXTURA (pixeles con colores sin procesar)
+		// Se genera a partir de las alturas del mapa de ruido evaluadas en un Gradiente
+		Color[] textureData = NoiseMapGenerator.GetTextureData(noiseMap, gradient);
+
+		// Lo guardamos en el mapData
+		return new MapData(noiseMap, textureData);
+	}
+
+	/// <summary>
+	/// Genera los datos de la Malla
+	/// a partir de un Mapa de Alturas, un multiplicador de altura para escalarla,
+	/// una curva de altura para ajustarla, un LOD y un Gradiente por si no se usa Textura (color en FragShader)
+	/// </summary>
+	/// <returns>Datos de la Malla</returns>
+	public MeshData GenerateMeshData(float[,] heightMap, int lod = 0)
+	{
+		return NoiseMeshGenerator.GenerateTerrainMesh(
+				heightMap, meshHeightMultiplier, meshHeightCurve, lod, gradient
+			);
+	}
+
+
+	// ===================================================================================== //
+	//	 THREADING:
+	
 	/// <summary>
 	///  Información de un Hilo: callback que se tiene que ejecutar con el parametro que devuelve
 	/// </summary>
 	/// <typeparam name="T">Resultado que devuelve el Hilo</typeparam>
-	private struct MapThreadInfo<T>
+	public struct MapThreadInfo<T>
 	{
 		// Se ejecuta despues del hilo:
 		public readonly Action<T> callback;
@@ -85,71 +123,13 @@ public class TerrainGenerator : MonoBehaviour
 		}
 	}
 
-	public MapData mapData;
-
-	public MapData GenerateMapData()
+	// Colas en las que se guarda la info de los hilos para ejecutarlos conforme le vengan
+	public Queue<MapThreadInfo<MapData>> mapDataThreadInfoQueue = new Queue<MapThreadInfo<MapData>>();
+	public Queue<MapThreadInfo<MeshData>> meshDataThreadInfoQueue = new Queue<MapThreadInfo<MeshData>>();
+	
+	/// Ejecuta todos los callbacks guardados en la cola con los parametros que devolvieron los hilos
+	public void UpdateThreadQueues()
 	{
-		// MAPA DE RUIDO
-		float[,] noiseMap = NoiseMapGenerator.GetNoiseMap(
-			mapChunkSize, mapChunkSize, noiseScale, offset,
-			numOctaves, persistance, lacunarity, seed
-		);
-
-		Color[] textureData = NoiseMapGenerator.GetTextureData(noiseMap, gradient);
-
-		return mapData = new MapData(noiseMap, textureData, meshData);
-	}
-
-	// Paraleliza la Creacion del Mapa de Ruido
-	public void RequestMapData(Action<MapData> callback)
-	{
-		ThreadStart threadStart = delegate
-		{
-			MapDataThread(callback);
-		};
-
-		new Thread(threadStart).Start();
-	}
-
-	// Proceso de creacion de MapData paralelizable
-	void MapDataThread(Action<MapData> callback)
-	{
-		// Crea la MapData
-		MapData mapData = GenerateMapData();
-
-		// Hace inaccesible la Cola cuando esta en esta linea de codigo para no pisarse entre hilos
-		lock (mapDataThreadInfoQueue) {
-			mapDataThreadInfoQueue.Enqueue(new MapThreadInfo<MapData>(callback, mapData));
-		}
-	}
-
-	// Paraleliza la Creacion de la Malla de Alturas
-	public void RequestMeshData(MapData mapData, Action<MeshData> callback)
-	{
-		ThreadStart threadStart = delegate
-		{
-			MeshDataThread(mapData, callback);
-		};
-
-		new Thread(threadStart).Start();
-	}
-
-	// Proceso de creacion de la Malla en un hilo
-	void MeshDataThread(MapData mapData, Action<MeshData> callback)
-	{
-		// Crea la Malla
-		MeshData meshData = NoiseMeshGenerator.GenerateTerrainMesh(mapData.noiseMap, meshHeightMultiplier, meshHeightCurve, lod, gradient);
-
-		// Hace inaccesible la Cola cuando esta en esta linea de codigo para no pisarse entre hilos
-		lock (meshDataThreadInfoQueue)
-		{
-			meshDataThreadInfoQueue.Enqueue(new MapThreadInfo<MeshData>(callback, meshData));
-		}
-	}
-
-	void Update()
-	{
-		// Ejecuta todos los callbacks guardados en la cola con los parametros que devolvieron los hilos
 		if (mapDataThreadInfoQueue.Count > 0)
 		{
 			for (int i = 0; i < mapDataThreadInfoQueue.Count; i++)
@@ -167,9 +147,69 @@ public class TerrainGenerator : MonoBehaviour
 			}
 		}
 	}
+	
+	// Paraleliza la Creacion del Mapa de Ruido
+	public void RequestMapData(Vector2 offset, Action<MapData> callback)
+	{
+		void ThreadStart()
+		{
+			MapDataThread(offset, callback);
+		}
 
+		new Thread(ThreadStart).Start();
+	}
+
+	// Proceso de creacion de MapData paralelizable
+	private void MapDataThread(Vector2 offset, Action<MapData> callback)
+	{
+		// Hace inaccesible la Cola cuando esta en esta linea de codigo para no pisarse entre hilos
+		lock (mapDataThreadInfoQueue) {
+			mapDataThreadInfoQueue.Enqueue(
+				new MapThreadInfo<MapData>(callback, GenerateMapData(offset))
+			);
+		}
+	}
+
+	// Paraleliza la Creacion de la Malla de Alturas
+	public void RequestMeshData(MapData mapData, int lod, Action<MeshData> callback)
+	{
+		void ThreadStart()
+		{
+			MeshDataThread(mapData, lod, callback);
+		}
+
+		new Thread(ThreadStart).Start();
+	}
+
+	// Proceso de creacion de la Malla en un hilo
+	void MeshDataThread(MapData mapData, int lod, Action<MeshData> callback)
+	{
+		// Hace inaccesible la Cola cuando esta en esta linea de codigo para no pisarse entre hilos
+		lock (meshDataThreadInfoQueue)
+		{
+			meshDataThreadInfoQueue.Enqueue(
+				new MapThreadInfo<MeshData>(callback, GenerateMeshData(mapData.noiseMap, lod))
+			);
+		}
+	}
+
+	
+	// ===============================================================================================
 	// DRAWS:
-	public void DrawTexture()
+	public void Draw()
+	{
+		MapData mapData = GenerateMapData();
+		MeshData meshData = GenerateMeshData(mapData.noiseMap);
+		DrawTexture(mapData);
+		DrawMesh(meshData);
+	}
+	public void Draw(MapData mapData, MeshData meshData)
+	{
+		DrawTexture(mapData);
+		DrawMesh(meshData);
+	}
+
+	private void DrawTexture(MapData mapData)
 	{
 		Renderer textureRenderer = GetComponent<Renderer>();
 		if (textureRenderer)
@@ -184,21 +224,18 @@ public class TerrainGenerator : MonoBehaviour
 		}
 	}
 
-	public void DrawMesh()
+	private void DrawMesh(MeshData meshData)
 	{
 		MeshFilter meshFilter = GetComponent<MeshFilter>();
-		MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
 
-		if (meshFilter && meshRenderer)
+		if (meshFilter)
 		{
-			Texture2D texture = mapData.GetTexture2D();
 			meshFilter.sharedMesh = meshData.CreateMesh();
-			meshRenderer.material.mainTexture = texture;
 			//transform.localScale = new Vector3(1, meshHeightMultiplier, 1);
 		}
 		else
 		{
-			Debug.LogWarning("Se quiere crear una malla con una textura en un objeto que le falta MeshFilter o MeshRenderer");
+			Debug.LogWarning("Se quiere crear una malla con una textura en un objeto que le falta MeshFilter");
 		}
 	}
 
@@ -214,7 +251,7 @@ public class MapGeneratorEditor : UnityEditor.Editor
 	public override void OnInspectorGUI()
 	{
 		TerrainGenerator terrainGen = target as TerrainGenerator;
-		if (terrainGen == null)
+		if (!terrainGen)
 		{
 			Debug.Log("No existe ningun objeto MapGenerator al que modificar su editor en el inspector");
 			return;
@@ -222,22 +259,19 @@ public class MapGeneratorEditor : UnityEditor.Editor
 
 		if (DrawDefaultInspector() && terrainGen.autoUpdate)
 		{
-			terrainGen.GenerateMapData();
-			terrainGen.DrawMesh();
+			terrainGen.Draw();
 		}
 
 		// Boton para generar el mapa
 		if (GUILayout.Button("Generate Terrain"))
 		{
-			terrainGen.GenerateMapData();
-			terrainGen.DrawMesh();
+			terrainGen.Draw();
 		}
 
 		if (GUILayout.Button("Reset Seed"))
 		{
 			terrainGen.ResetSeed();
-			terrainGen.GenerateMapData();
-			terrainGen.DrawMesh();
+			terrainGen.Draw();
 		}
 	}
 }
