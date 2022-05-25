@@ -3,127 +3,140 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(
-	typeof(MeshFilter),
-	typeof(MeshRenderer)
+    typeof(MeshFilter),
+    typeof(MeshRenderer)
 )]
 public class NoiseMeshDisplay : MonoBehaviour
 {
-	private MeshData meshData;
-	private Texture2D texture;
+    public NoiseMapGenerator.NoiseParams noiseParams;
+    
+    protected TerrainGenerator.MapData mapData;
+    protected MeshData meshData;
+    private Texture2D texture;
 
+    [Space] [Range(0, 241)] public int chunkSize = 241;
+    [Range(0, 6)] public int LOD = 1;
 
-	[Space]
+    [Range(0, 40)] public float noiseScale = .3f;
 
-	[Range(0, 241)] public int chunkSize = 241;
-	[Range(0, 6)] public int LOD = 1;
-	
-	[Range(0,40)] public float noiseScale = .3f;
+    [Range(1, 10)] public int octaves = 1;
+    [Range(0, 1)] public float persistance = 1f;
+    [Range(1, 5)] public float lacunarity = 1f;
 
-	[Range(1, 10)] public int octaves = 1;
-	[Range(0, 1)] public float persistance = 1f;
-	[Range(1, 5)] public float lacunarity = 1f;
+    [Space] public Gradient gradient = new Gradient();
 
-	[Space]
+    public AnimationCurve heightCurve = new AnimationCurve();
+    [Range(0.01f, 100f)] public float heightScale;
 
-	public Gradient gradient = new Gradient();
+    public Vector2 offset;
 
-	public AnimationCurve heightCurve = new AnimationCurve();
-	[Range(0.01f, 100f)] public float heightScale;
+    [Space] public bool autoUpdate = true;
+    public bool movement = true;
+    [Range(0, 1)] public float speed;
 
-	public Vector2 offset;
+    [Space] public int seed = DateTime.Now.Millisecond;
 
-	[Space]
+    private Transform player;
 
-	public bool autoUpdate = true;
-	public bool movement = true;
-	[Range(0, 1)] public float speed;
+    void Awake()
+    {
+        player = GameObject.FindGameObjectWithTag("Player").transform;
+        
+        if (player != null)
+            GetLOD(player.transform.position);
 
-	[Space]
+        UpdateMapData();
+        UpdateMeshData();
+    }
 
-	public int seed = DateTime.Now.Millisecond;
+    public void Update()
+    {
+        // Movimiento en el Mapa de Ruido al mover el offset
+        if (movement)
+        {
+            offset.x += Time.deltaTime * speed;
+            UpdateMapData();
+            UpdateMeshData();
+        }
+        
+        // Si hay un Jugador actualizamos el Nivel de Detalle de la Malla
+        if (player != null)
+        {
+            int newLOD = GetLOD(player.transform.position);
+            if (newLOD != LOD)
+            {
+                LOD = newLOD;
+                UpdateMeshData();
+            }
+        }
+        
+        TerrainGenerator.UpdateTerrainLoading();
+    }
 
-	private NoiseMapGenerator mapGenerator = new NoiseMapGenerator();
+    /// <summary>
+    /// Actualiza el Mapa de Alturas y la Textura
+    /// </summary>
+    public void UpdateMapData()
+    {
+        TerrainGenerator.RequestMapData(noiseParams,
+            gradient,
+            result => mapData = result 
+            );
+        texture = mapData.GetTexture2D();
+        
+        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+        if (meshRenderer)
+            meshRenderer.sharedMaterial.mainTexture = texture;
+    }
 
-	private float[,] noiseMap;
+    /// <summary>
+    /// Actualiza la Malla del Terreno.
+    /// </summary>
+    public virtual void UpdateMeshData()
+    {
+        TerrainGenerator.RequestMeshData(
+            mapData,
+            heightScale,
+            heightCurve, gradient,
+            result => meshData = result
+            );
+        
+        MeshFilter meshFilter = GetComponent<MeshFilter>();
+        if (meshFilter)
+            meshFilter.mesh = meshData.CreateMesh();
+    }
+    
+    private void UpdateCollider()
+    {
+        // Calculo del Terrain Collider a partir del noisemap
+        TerrainCollider terrainCollider = GetComponent<TerrainCollider>();
+        if (terrainCollider)
+        {
+            float[,] noiseCollider = new float[chunkSize, chunkSize];
+            for (int x = 0; x < chunkSize; x++)
+            for (int y = 0; y < chunkSize; y++)
+                noiseCollider[x, y] = mapData.noiseMap[x, y] * heightScale;
 
-	void Awake()
-	{
-		GameObject player = GameObject.FindGameObjectWithTag("Player");
-		if (player != null)
-			UpdateLOD(player.transform.position);
+            TerrainData data = terrainCollider.terrainData = new TerrainData();
+            data.heightmapResolution = chunkSize;
+            data.SetHeights(0, 0, noiseCollider);
+        }
+    }
+    
+    public void AdjustHeightScale()
+    {
+        transform.localScale = new Vector3(1, heightScale, 1);
+    }
 
-		CreateTerrain();
-	}
-
-	void Update()
-	{
-		if (movement)
-		{
-			CreateTerrain();
-			offset.x += Time.deltaTime * speed;
-		}
-	}
-
-	public void CreateTerrain()
-	{
-		CreateNoiseMap();
-		CreateTexture();
-		CreateMesh();
-		//AdjustHeightScale();
-		SetTerrainCollider();
-	}
-
-	private void CreateNoiseMap()
-	{
-		noiseMap =
-			NoiseMapGenerator.GetNoiseMap(chunkSize, chunkSize, noiseScale, offset, octaves, persistance, lacunarity, seed);
-	}
-
-	private void CreateMesh()
-	{
-		meshData = NoiseMeshGenerator.GenerateTerrainMesh(noiseMap, heightScale, heightCurve, LOD, gradient);
-		
-		GetComponent<MeshFilter>().mesh = meshData.CreateMesh();
-	}
-
-	private void CreateTexture()
-	{
-		texture = NoiseMapGenerator.GetTexture(noiseMap, gradient);
-		GetComponent<MeshRenderer>().sharedMaterial.mainTexture = texture;
-	}
-
-	public void AdjustHeightScale()
-	{
-		transform.localScale = new Vector3(1, heightScale, 1);
-	}
-
-	public void UpdateLOD(Vector2 playerWorldPos)
-	{
-		var position = transform.position;
-		Vector2 terrainWorldPos = new Vector2(position.x, position.z);
-		LOD = Mathf.FloorToInt((terrainWorldPos - playerWorldPos).magnitude / chunkSize);
-	}
-
-	private void SetTerrainCollider()
-	{
-		// Calculo del Terrain Collider a partir del noisemap
-		TerrainCollider terrainCollider = GetComponent<TerrainCollider>();
-		if (terrainCollider)
-		{
-			float[,] noiseCollider = new float[chunkSize, chunkSize];
-			for (int x = 0; x < chunkSize; x++)
-			for (int y = 0; y < chunkSize; y++)
-				noiseCollider[x, y] = noiseMap[x, y] * heightScale;
-
-			TerrainData data = terrainCollider.terrainData = new TerrainData();
-			data.heightmapResolution = chunkSize;
-			data.SetHeights(0,0, noiseCollider);
-		}
-	}
-
-	public void ResetRandomSeed()
-	{
-		seed = NoiseMapGenerator.generateRandomSeed();
-	}
-
+    private int GetLOD(Vector2 playerWorldPos)
+    {
+        var position = transform.position;
+        Vector2 terrainWorldPos = new Vector2(position.x, position.z);
+        return Mathf.FloorToInt((terrainWorldPos - playerWorldPos).magnitude / chunkSize);
+    }
+    
+    public void ResetRandomSeed()
+    {
+        seed = NoiseMapGenerator.generateRandomSeed();
+    }
 }
