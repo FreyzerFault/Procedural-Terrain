@@ -79,7 +79,7 @@ public class TerrainPlane : MonoBehaviour
 
 	public void GenerateMeshData()
 	{
-		meshData = MeshGenerator.GenerateTerrainMesh(noiseMap, p.HeightScale, p.heightCurve, p.gradient, p.LOD);
+		meshData = MeshGenerator.GetTerrainMeshData(noiseMap, p.HeightScale, p.heightCurve, p.gradient, p.LOD);
 	}
 
 	public void UpdateMesh()

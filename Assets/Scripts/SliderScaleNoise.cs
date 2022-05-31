@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +14,6 @@ public class SliderScaleNoise : MonoBehaviour
 
 	public void OnSlider()
 	{
-		meshDisplay.noiseScale = slider.value;
-	}
+		meshDisplay.NoiseScale = slider.value;
+     	}
 }

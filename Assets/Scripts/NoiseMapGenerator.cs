@@ -10,8 +10,8 @@ public class NoiseMapGenerator
     {
         // Anchura y Altura del terreno (num de vertices)
         // TODO Limitar Width y Height a 240
-        [Range(50, 241)] public int width = 241;
-        [Range(50, 241)] public int height = 241;
+        [Range(10, 241)] public int width = 241;
+        [Range(10, 241)] public int height = 241;
         public float noiseScale = 5f;
 
         // Mejora con Octavos
@@ -22,7 +22,20 @@ public class NoiseMapGenerator
         public Vector2 offset = Vector2.zero;
 
         public int seed = DateTime.Now.Millisecond;
-
+        
+        // Default
+        public NoiseParams()
+        {
+            width = 241;
+            height = 241;
+            noiseScale = 5;
+            offset = Vector2.zero;
+            numOctaves = 4;
+            persistance = 0.5f;
+            lacunarity = 2;
+            seed = DateTime.Now.Millisecond;
+        }
+        
         // COPY
         public NoiseParams(NoiseParams orig)
         {

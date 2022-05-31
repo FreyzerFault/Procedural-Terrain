@@ -86,7 +86,7 @@ Material:
     - _IntersectionFoamShadowProjection: 4.6
     - _IntersectionWaterBlend: 0
     - _LightingHardness: 0
-    - _LightingSmoothness: 0.71
+    - _LightingSmoothness: 0.649
     - _NormalsStrength: 0.42
     - _PlanarReflectionFresnel: 2.5
     - _PlanarReflectionStrength: 0.82
@@ -104,7 +104,7 @@ Material:
     - _SurfaceFoamHeightMaskSmoothness: 0
     - _SurfaceFoamShadowProjection: 15
     - _UnderwaterRefractionStrength: 0.099
-    - _WaterColorDepth: 0.8
+    - _WaterColorDepth: 1.38
     - _WaterColorHorizonDistance: 20
     m_Colors:
     - _IntersectionFoamColor: {r: 1, g: 1, b: 1, a: 1}
@@ -125,5 +125,5 @@ Material:
     - _WaterColorUnderwater: {r: 0.20389047, g: 0.30977106, b: 0.517647, a: 1}
     - _WaveColor: {r: 0, g: 0, b: 0, a: 0}
     - _WaveDirections: {r: 0, g: 0.64, b: 1, a: 0.33}
-    - _WaveVisuals: {r: 0.132, g: 7.9, b: 1.38, a: 0}
+    - _WaveVisuals: {r: 0.132, g: 7.9, b: 0.38, a: 0}
   m_BuildTextureStacks: []

@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.0.0">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1060</x>
+      <y>490</y>
+      <w>260</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+NoiseMeshDisplay
+--
++ noiseParams : NoiseParams
+(width, height, noiseScale, numOctaves,
+persistence, lacunarity, offset, seed)
++ 
+--
++UpdateMapData
++UpdateMeshData
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1090</x>
+      <y>730</y>
+      <w>200</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+TinMeshDisplay
+--
++UpdateMeshData (override)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1180</x>
+      <y>640</y>
+      <w>30</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;90.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>1330</x>
+      <y>490</y>
+      <w>160</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Crea el Terreno a partir 
+de una Malla Regular</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>1300</x>
+      <y>730</y>
+      <w>150</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Solo cambia la EEDD
+Usa un TIN</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>780</x>
+      <y>590</y>
+      <w>170</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+TerrainGenerator
+--
++ RequestMeshData
++ RequestMeshDataTIN</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>940</x>
+      <y>600</y>
+      <w>140</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;120.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>940</x>
+      <y>650</y>
+      <w>170</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;150.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>680</x>
+      <y>430</y>
+      <w>160</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Genera toda la info 
+que necesita Unity
+Mapa de Ruido,
+Malla
+Es Singleton,
+Utiliza Threading
+Guarda la topología
+del TIN para consultarla</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>490</x>
+      <y>710</y>
+      <w>240</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+NoiseMapGenerator
+--
++ GetNoiseMap (NoiseParams)
++ GetTextureData (float[,], Gradient)
++ GetTexture (float[,], Gradient)
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>850</x>
+      <y>880</y>
+      <w>190</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+MeshGenerator
+--
++ GenerateTerrainMeshData
++ GenerateTINMeshData
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>720</x>
+      <y>650</y>
+      <w>110</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;60.0;90.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>870</x>
+      <y>650</y>
+      <w>80</w>
+      <h>250</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>60.0;230.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>280</x>
+      <y>710</y>
+      <w>200</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Maneja el Perlin Noise
+Genera un Mapa de Ruido
+Y puede generar los colores
+para la textura a partir de este</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>550</x>
+      <y>880</y>
+      <w>290</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Genera MeshData a partir de
+un Mapa de Alturas.
+En principio generaba una malla básica,
+pero se añade la posibilidad de usar un TIN</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1030</x>
+      <y>910</y>
+      <w>150</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>130.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1160</x>
+      <y>850</y>
+      <w>100</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+MeshData
+--
++ vertices
++ triangles
++ uvs
++ colors
+--
++ CreateMesh
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>1290</x>
+      <y>890</y>
+      <w>300</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Gestiona los datos solamente
+para poder paralelizar su creación.
+Una vez en el Main Thread podemos obtener
+el objeto Mesh de Unity con CreateMesh
+(Crear una Mesh de Unity no esta permitido
+fuera del Main Thread)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>380</x>
+      <y>160</y>
+      <w>510</w>
+      <h>210</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+(*) El mayor problema de esto ha sido el no poder usar con libertad
+Objetos de Unity en un Hilo que no sea el principal
+
+
+GetTextureData() realiza copias de el Gradient y no crea una Textura,
+sino que devuelve el array de colores con el que se crea la textura.
+
+El GetTexture() solo se usa en caso de no esta paralelizado
+
+En el MeshGenerator tambien creamos copias del Gradient y el AnimationCurve
+Y MeshData tiene el método CreateMesh para poderlo generar libremente y
+crear el objeto Mesh de Unity despues en el MainThread</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>920</x>
+      <y>320</y>
+      <w>210</w>
+      <h>290</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;270.0;190.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1110</x>
+      <y>290</y>
+      <w>40</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+TIN</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1400</x>
+      <y>400</y>
+      <w>60</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Vertex</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1280</x>
+      <y>290</y>
+      <w>60</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Edge</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1390</x>
+      <y>120</y>
+      <w>80</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>style=autoresize
+Triangle</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1140</x>
+      <y>130</y>
+      <w>270</w>
+      <h>180</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;160.0;250.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1140</x>
+      <y>300</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;140.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1140</x>
+      <y>320</y>
+      <w>280</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;260.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1310</x>
+      <y>150</y>
+      <w>120</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>100.0;10.0;10.0;140.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1430</x>
+      <y>150</y>
+      <w>30</w>
+      <h>270</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;250.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1330</x>
+      <y>150</y>
+      <w>120</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;140.0;100.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1330</x>
+      <y>320</y>
+      <w>90</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;70.0;80.0</additional_attributes>
+  </element>
+</diagram>

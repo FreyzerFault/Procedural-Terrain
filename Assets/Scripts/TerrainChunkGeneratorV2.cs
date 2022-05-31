@@ -66,7 +66,7 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
         // Ultimo chunk del jugador para comprobar si ha cambiado de chunk
         lastViewerChunk = ViewerChunk;
 
-        TerrainGenerator.UpdateTerrainLoading();
+        TerrainGenerator.Instance.UpdateTerrainLoading();
     }
 
 
@@ -191,12 +191,12 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
         /// </summary>
         public void Build()
         {
-            TerrainGenerator.RequestMapData(localNoiseParams, gradient, mapData =>
+            TerrainGenerator.Instance.RequestMapData(localNoiseParams, gradient, mapData =>
             {
                 meshRenderer.material.mainTexture = mapData.GetTexture2D();
                 for (int i = 0; i < meshDataPerLOD.Length; i++)
                 {
-                    TerrainGenerator.RequestMeshDataLOD(mapData, heightMultiplier, heightCurve, gradient, i,
+                    TerrainGenerator.Instance.RequestMeshDataLOD(mapData, heightMultiplier, heightCurve, gradient, i,
                         meshData =>
                         {
                             int thisLOD = ((StaticMeshData) meshData).lod;
@@ -316,41 +316,3 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
     }
 }
 
-[CustomEditor(typeof(TerrainChunkGeneratorV2))]
-public class TerrainGeneratorEditor : UnityEditor.Editor
-{
-    public override void OnInspectorGUI()
-    {
-        TerrainChunkGeneratorV2 terrainChunkGen = target as TerrainChunkGeneratorV2;
-        if (terrainChunkGen == null)
-        {
-            Debug.Log("No existe ningun objeto TerrainGeneratorV2 al que modificar su editor en el inspector");
-            return;
-        }
-
-        if (DrawDefaultInspector() && terrainChunkGen.autoUpdate)
-        {
-            terrainChunkGen.UpdateVisibleChunks();
-        }
-
-        // Boton para generar el mapa
-        if (GUILayout.Button("Regenerate Terrain"))
-        {
-            terrainChunkGen.ClearImmediate();
-            terrainChunkGen.UpdateVisibleChunks();
-        }
-
-        if (GUILayout.Button("Reset Seed"))
-        {
-            terrainChunkGen.ClearImmediate();
-            terrainChunkGen.ResetRandomSeed();
-            terrainChunkGen.UpdateVisibleChunks();
-        }
-
-        if (GUILayout.Button("Clear"))
-            terrainChunkGen.ClearImmediate();
-        
-        if (GUILayout.Button("LoadChunks"))
-            TerrainGenerator.UpdateTerrainLoading();
-    }
-}

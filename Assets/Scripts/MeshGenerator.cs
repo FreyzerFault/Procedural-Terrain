@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Numerics;
-using System.Runtime.InteropServices;
+using GEOMETRY;
+using JetBrains.Annotations;
 using UnityEngine;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
@@ -20,7 +20,7 @@ public static class MeshGenerator
     /// <param name="gradient">Gradiente de Color con el que asignar color a los vertices</param>
     /// <returns>Datos de un Mesh</returns>
     // 
-    public static MeshData GenerateTerrainMesh(float[,] heightMap, float heightMultiplier,
+    public static MeshData GetTerrainMeshData(float[,] heightMap, float heightMultiplier,
         AnimationCurve _heightCurve = null, Gradient gradient = null, int LOD = 0)
     {
         // Evaluar una Curva tiene problemas con el paralelismo
@@ -77,9 +77,14 @@ public static class MeshGenerator
 
         return data;
     }
-
-    public static DynamicMeshData GenerateTINMeshData(float[,] heightMap, float heightMultiplier,
-        AnimationCurve _heightCurve = null, Gradient gradient = null, float errorTolerance = 1)
+    
+    /// <summary>
+    /// Generacion de la Malla a partir de un TIN
+    /// </summary>
+    /// <param name="_heightCurve">Curva de Altura para ajustarlas</param>
+    /// <param name="gradient">Color segun la Altura (por si no se usa Textura, aplicado al vertice)</param>
+    /// <returns>Datos de una Malla que va a usar Unity</returns>
+    public static DynamicMeshData GenerateTINMeshData(TIN tin, AnimationCurve _heightCurve, Gradient gradient)
     {
         // Para poderlo paralelizar de nuevo hacemos copias:
         AnimationCurve heightCurve = _heightCurve != null
@@ -89,42 +94,56 @@ public static class MeshGenerator
         Gradient gradCopy = null;
         if (gradient != null)
             gradCopy = GetGradientCopy(gradient);
-
-        int mapWidth = heightMap.GetLength(0);
-        int mapHeight = heightMap.GetLength(1);
-
+        else
+            gradCopy = GetDefaultGradient();
+        
+        // Creacion de la malla (Datos basicos que necesita Unity)
         DynamicMeshData data = new DynamicMeshData();
 
-        // Al principio añadimos las 4 esquinas (centradas en 0,0):
-        data.AddVertex(new Vector2(-mapWidth / 2, -mapHeight / 2), heightMap[0, 0]);
-        data.AddVertex(new Vector2(mapWidth / 2, -mapHeight / 2), heightMap[mapWidth - 1, 0]);
-        data.AddVertex(new Vector2(-mapWidth / 2, mapHeight / 2), heightMap[0, mapHeight - 1]);
-        data.AddVertex(new Vector2(mapWidth / 2, mapHeight / 2), heightMap[mapWidth - 1, mapHeight - 1]);
-
-        data.AddTriangle(0, 2, 1);
-        data.AddTriangle(1, 2, 3);
-
-        data.AddUV(0, 0);
-        data.AddUV(1, 0);
-        data.AddUV(0, 1);
-        data.AddUV(1, 1);
-
-        if (gradCopy != null)
+        // Vertices
+        foreach (Vertex vertex in tin.vertices)
         {
-            data.AddColor(gradCopy.Evaluate(heightMap[0, 0]));
-            data.AddColor(gradCopy.Evaluate(heightMap[mapWidth - 1, 0]));
-            data.AddColor(gradCopy.Evaluate(heightMap[0, mapHeight - 1]));
-            data.AddColor(gradCopy.Evaluate(heightMap[mapWidth - 1, mapHeight - 1]));
+            data.AddVertex(vertex.v3D);
+            data.AddUV(vertex.x / tin.width, vertex.z / tin.height);
+            data.AddColor(gradCopy.Evaluate(vertex.y));
         }
 
-        // Empieza el bucle
-        // Condicion de parada: ningun punto del Mapa de Alturas tiene un error mayor al tolerado
-        bool canAddPoints = false;
-        while (canAddPoints)
-        {
-        }
-
+        // Indices
+        foreach (Triangle tri in tin.triangles)
+            data.AddTriangle(tri.v1.index, tri.v3.index, tri.v2.index);
+        
         return data;
+    }
+    
+   /// <summary>
+   /// Genera la Malla a partir de un TIN que se crea y se puede sacar como Output
+   /// </summary>
+   /// <param name="heightMap">Mapa de Alturas</param>
+   /// <param name="TINresultante">TIN que se crea y sale como Output</param>
+   /// <param name="heightMultiplier">Factor a la altura para no limitarla en (0,1)</param>
+   /// <param name="_heightCurve">Curva de altura que las ajusta</param>
+   /// <param name="gradient">Gradiente de Color para generar la Textura</param>
+   /// <param name="errorTolerance">Error Maximo Tolerado por el TIN</param>
+   /// <param name="maxIterations">Limite de iteraciones maximas del TIN</param>
+   /// <returns>Datos de una Malla que va a usar Unity</returns>
+    public static DynamicMeshData GenerateTINMeshData(float[,] heightMap, [CanBeNull] out TIN TINresultante, float heightMultiplier,
+        AnimationCurve _heightCurve = null, Gradient gradient = null, float errorTolerance = 1, int maxIterations = 10)
+    {
+        // Creacion del TIN (Estructura topologica interna)
+        TINresultante = new TIN(heightMap, errorTolerance, heightMultiplier, maxIterations);
+        TINresultante.InitGeometry(heightMap);
+        TINresultante.AddPointLoop();
+        
+        // Creacion de la Malla
+        return GenerateTINMeshData(TINresultante, _heightCurve, gradient);
+    }
+
+    public static DynamicMeshData GenerateTINMeshData(float[,] heightMap,
+        float heightMultiplier,
+        AnimationCurve _heightCurve = null, Gradient gradient = null, float errorTolerance = 1)
+    {
+        TIN tin = new TIN();
+        return GenerateTINMeshData(heightMap, out tin, heightMultiplier, _heightCurve, gradient, errorTolerance);
     }
 
     /// <summary>

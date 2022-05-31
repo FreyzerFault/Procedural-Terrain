@@ -581,6 +581,49 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &1509586879
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1509586881}
+  - component: {fileID: 1509586880}
+  m_Layer: 0
+  m_Name: TerrainGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1509586880
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509586879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96256da5a1ed69e41805d5d2d5b09174, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1509586881
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509586879}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -76.7561, y: -19.687408, z: -152.81235}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1633545074
 GameObject:
   m_ObjectHideFlags: 0
@@ -693,7 +736,7 @@ MonoBehaviour:
   colorGradientTexture: {fileID: 0}
   shallowColor: {r: 0, g: 0.7725491, b: 0.62352943, a: 0.5019608}
   deepColor: {r: 0.01176471, g: 0.28624168, b: 0.50980073, a: 1}
-  colorDepth: 0.8
+  colorDepth: 1.38
   horizonColor: {r: 0, g: 0.22741818, b: 0.8, a: 1}
   horizonDistance: 20
   shoreFade: 1
@@ -750,7 +793,7 @@ MonoBehaviour:
   shoreFoamBreakupStrength: 0
   shoreFoamBreakupScale: 0
   lighting: 0
-  lightingSmoothness: 0.71
+  lightingSmoothness: 0.649
   lightingSpecularColor: {r: 1, g: 1, b: 1, a: 0}
   lightingDiffuseColor: {r: 0, g: 0, b: 0, a: 0}
   lightingHardness: 0
@@ -760,10 +803,10 @@ MonoBehaviour:
   normalsScale: 0.36
   normalsSpeed: 0.04
   refractionStrength: 0.022
-  waveVisuals: {x: 0.132, y: 7.9, z: 1.38}
+  waveVisuals: {x: 0.132, y: 7.9, z: 0.38}
   waveSteepness: 0.132
   waveLength: 7.9
-  waveSpeed: 1.38
+  waveSpeed: 0.38
   waveDirections: {x: 0, y: 0.64, z: 1, w: 0.33}
   waveDirection1: 0
   waveDirection2: 0.64
