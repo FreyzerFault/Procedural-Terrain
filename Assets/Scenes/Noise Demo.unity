@@ -429,7 +429,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 241
   height: 241
-  NoiseScale: 7.51
+  NoiseScale: 8.56
   offset: {x: 77.4, y: 6.5}
   maxHeight: 1
   minHeight: 0

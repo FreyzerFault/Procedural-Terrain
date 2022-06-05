@@ -200,7 +200,7 @@ public class TerrainChunkGeneratorV1 : MonoBehaviour
 	// Resetea la Semilla de forma Aleatoria
 	public void ResetRandomSeed()
 	{
-		np.seed = NoiseMapGenerator.generateRandomSeed();
+		np.seed = NoiseMapGenerator.GenerateRandomSeed();
 	}
 
 	// Borra todos los terrenos renderizados

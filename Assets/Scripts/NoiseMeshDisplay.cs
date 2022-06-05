@@ -150,6 +150,6 @@ public class NoiseMeshDisplay : MonoBehaviour
     
     public void ResetRandomSeed()
     {
-        seed = NoiseMapGenerator.generateRandomSeed();
+        seed = NoiseMapGenerator.GenerateRandomSeed();
     }
 }

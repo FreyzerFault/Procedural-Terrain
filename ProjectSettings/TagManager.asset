@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - Terrain
+  - Camera Manager
   layers:
   - Default
   - TransparentFX

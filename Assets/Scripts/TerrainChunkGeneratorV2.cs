@@ -14,7 +14,7 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
 {
     public NoiseMapGenerator.NoiseParams noiseParams;
 
-    private int chunkSize { get => noiseParams.width; }
+    private int chunkSize { get => noiseParams.width - 1; }
     private float noiseScale { get => noiseParams.noiseScale; }
     private int seed { get => noiseParams.seed; set => noiseParams.seed = value; }
 
@@ -89,13 +89,13 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
             {
                 // El unico valor en el mapa de ruido que diferencia a cada Chunk es el offset:
                 NoiseMapGenerator.NoiseParams localNoiseParams = new NoiseMapGenerator.NoiseParams(noiseParams);
-                localNoiseParams.offset += GetOffset(chunkCoords, noiseScale);
+                localNoiseParams.offset += GetOffset(chunkCoords, chunkSize);
                 
                 chunkDictionary.Add(
                     chunkCoords,
                     new TerrainChunk(
                         chunkCoord: chunkCoords,
-                        size: chunkSize - 1,
+                        size: chunkSize,
                         parent: transform,
                         material: mapMaterial,
                         localNoiseParams: localNoiseParams,
@@ -121,7 +121,7 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
     // Resetea la Semilla de forma Aleatoria
     public void ResetRandomSeed()
     {
-        seed = NoiseMapGenerator.generateRandomSeed();
+        seed = NoiseMapGenerator.GenerateRandomSeed();
     }
 
     public class TerrainChunk
@@ -278,7 +278,7 @@ public class TerrainChunkGeneratorV2 : MonoBehaviour
     private static int GetVisibilityChunkBorderLength(int renderDistance) => renderDistance * 2 + 1;
 
     // Noise Offset (desplazamiento del Mapa de Ruido al que se encuentra el Chunk)
-    public static Vector2 GetOffset(Vector2 chunkCoord, float noiseScale) => chunkCoord * noiseScale;
+    public static Vector2 GetOffset(Vector2 chunkCoord, float size) => chunkCoord * size;
 
 
     // Transformaciones de Espacio de Mundo al Espacio del Chunk:

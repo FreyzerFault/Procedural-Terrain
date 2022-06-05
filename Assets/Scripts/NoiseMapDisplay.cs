@@ -71,7 +71,7 @@ public class NoiseMapDisplay : MonoBehaviour
 
 	public void ResetRandomSeed()
 	{
-		seed = NoiseMapGenerator.generateRandomSeed();
+		seed = NoiseMapGenerator.GenerateRandomSeed();
 	}
 
 	public float[,] GetRandomMap(int width, int height)

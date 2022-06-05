@@ -5,8 +5,9 @@ namespace GEOMETRY
 {
     public class Utils
     {
-        public static float EPSILON = 0.0001f;
+        public static float EPSILON = 0.001f;
 
+        public static bool Equals(float a, float b) => Mathf.Abs(a - b) < EPSILON;
         public static bool Equals(Vector2 v1, Vector2 v2) => Mathf.Abs((v1 - v2).magnitude) < EPSILON;
 
         /// <summary>

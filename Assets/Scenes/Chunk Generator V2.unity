@@ -153,15 +153,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   noiseParams:
-    width: 241
-    height: 241
-    noiseScale: 1
+    size: 241
+    noiseScale: 48.4
     numOctaves: 4
     persistance: 0.5
     lacunarity: 2
     offset: {x: 0, y: 0}
-    seed: 2143214
-  heightMultiplier: 200
+    seed: 334
+  heightMultiplier: 100
   heightCurve:
     serializedVersion: 2
     m_Curve:
@@ -213,11 +212,11 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: 1.0320754
+      outSlope: 1.0320754
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.27345806
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -251,10 +250,10 @@ MonoBehaviour:
     m_Mode: 0
     m_NumColorKeys: 8
     m_NumAlphaKeys: 2
-  autoUpdate: 1
+  autoUpdate: 0
   mapMaterial: {fileID: 2100000, guid: 607360cf72bf200459b2618c7d751f4a, type: 2}
-  renderDist: 6
-  numLODs: 4
+  renderDist: 2
+  numLODs: 2
   viewer: {fileID: 2021137444}
 --- !u!4 &360928952
 Transform:
@@ -651,7 +650,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1633545074}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.6, z: 0}
+  m_LocalPosition: {x: 0, y: 0.296, z: 0}
   m_LocalScale: {x: 20, y: 1, z: 20}
   m_Children: []
   m_Father: {fileID: 2021137444}

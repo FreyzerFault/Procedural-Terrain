@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GEOMETRY;
 using JetBrains.Annotations;
@@ -138,6 +139,19 @@ public static class MeshGenerator
         return GenerateTINMeshData(TINresultante, _heightCurve, gradient);
     }
 
+   public static DynamicMeshData GenerateTINMeshData(Vector3[] points, AABB aabb, [CanBeNull] out TIN TINresultante,
+       float heightMultiplier,
+       AnimationCurve _heightCurve = null, Gradient gradient = null, float errorTolerance = 1, int maxIterations = 10)
+   {
+       // Creacion del TIN (Estructura topologica interna)
+       TINresultante = new TIN(points, aabb, errorTolerance, heightMultiplier, maxIterations);
+       TINresultante.InitGeometry();
+       TINresultante.AddPointLoop();
+        
+       // Creacion de la Malla
+       return GenerateTINMeshData(TINresultante, _heightCurve, gradient);
+   }
+
     public static DynamicMeshData GenerateTINMeshData(float[,] heightMap,
         float heightMultiplier,
         AnimationCurve _heightCurve = null, Gradient gradient = null, float errorTolerance = 1)
@@ -248,6 +262,7 @@ public class StaticMeshData : MeshData
         };
 
         mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
 
         return mesh;
     }
@@ -274,10 +289,9 @@ public class DynamicMeshData : MeshData
     {
         if (a >= vertices.Count || b >= vertices.Count || c >= vertices.Count)
         {
-            Debug.LogError("Triangle out of Bounds!!! " + vertices.Count + " Vertices. Triangle(" + a + ", " + b +
+            throw new Exception("Triangle out of Bounds!!! " + vertices.Count + " Vertices. Triangle(" + a + ", " + b +
                            ", " +
                            c + ")");
-            return;
         }
 
         triangles.Add(a);
@@ -297,6 +311,7 @@ public class DynamicMeshData : MeshData
         };
 
         mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
 
         return mesh;
     }

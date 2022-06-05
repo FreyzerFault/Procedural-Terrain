@@ -1,4 +1,5 @@
-﻿using GEOMETRY;
+﻿using System;
+using GEOMETRY;
 using TINManager;
 using UnityEditor;
 using UnityEngine;
@@ -37,8 +38,14 @@ namespace Editor
             GUIStyle whiteStyle = new GUIStyle();
             whiteStyle.normal.textColor = Color.white;
             
-            if (tin.lastVertexAdded != null)
-                Handles.Label(tin.lastVertexAdded.v3D, tin.lastVertexAdded.v3D.ToString(), magentaStyle);
+            if (tin.lastVertexAdded != null && tin.lastVertexAdded.Count > 0)
+            {
+                for (int i = 0; i < tin.lastVertexAdded.Count; i++)
+                {
+                    Handles.Label(tin.lastVertexAdded[i].v3D, tin.lastVertexAdded[i].v3D.ToString(), cyanStyle);  
+                    Handles.Label(tin.lastVertexAdded[i].v3D + Vector3.up * 10, tin.lastVertexError[i].ToString(), magentaStyle);   
+                }
+            }
             
             if (showHeightInfo)
                 foreach (Vertex v in tin.vertices)
@@ -85,16 +92,14 @@ namespace Editor
             // Boton para generar el mapa
             if (GUILayout.Button("Generate Terrain"))
             {
-                tinVisualizer.fase = 0;
-                tinVisualizer.UpdateMap();
+                tinVisualizer.ResetTIN();
             }
 
 
             if (GUILayout.Button("Reset Seed"))
             {
-                tinVisualizer.fase = 0;
                 tinVisualizer.ResetRandomSeed();
-                tinVisualizer.UpdateMap();
+                tinVisualizer.ResetTIN();
             }
 
             if (GUILayout.Button("Next Point"))
@@ -104,17 +109,16 @@ namespace Editor
 
             if (GUILayout.Button("Animated Generation"))
             {
-                if (!tinVisualizer.animationRunning)
-                {
-                    tinVisualizer.StartCoroutine(tinVisualizer.AnimatedGeneration());
-                    tinVisualizer.animationRunning = true;
-                }
-                else
-                {
-                    tinVisualizer.StopAllCoroutines();
-                    tinVisualizer.animationRunning = false;
-                }
+                tinVisualizer.BuildingAnimation();
             }
+
+            
+            
+            // if (GUILayout.Button("Load From File"))
+            // {
+            //     String filePath = EditorUtility.OpenFilePanel("Load TIN", "", "txt");
+            //     tinVisualizer.LoadFromFile(filePath);
+            // }
         }
     }
 }
