@@ -13,19 +13,22 @@ public class Minimap : MonoBehaviour
 
     public GameObject pinPoint;
 
+    private void Awake()
+    {
+        renderCamera.cullingMask = LayerMask.NameToLayer("UI");
+    }
+
     private void Update()
     {
         UpdateMapBounds();
     }
 
-    public void UpdateMapBounds()
+    private void UpdateMapBounds()
     {
         rectTransform = GetComponent<RectTransform>();
         
         Vector3[] corners = new Vector3[4];
         rectTransform.GetWorldCorners(corners);
-            
-        Debug.Log(corners.Length);
 
         Vector3 center = (corners[0] + corners[2]) / 2;
         mapBounds = new Bounds(center, (center - corners[0]) * 2);

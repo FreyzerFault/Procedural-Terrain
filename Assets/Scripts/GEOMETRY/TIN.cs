@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace GEOMETRY
@@ -68,7 +71,7 @@ namespace GEOMETRY
         {
             width = heightMap.GetLength(0);
             height = heightMap.GetLength(1);
-            aabb = new AABB() { min = new Vector2(0, 0), max = new Vector2(width, height) };
+            aabb = new AABB() {min = new Vector2(0, 0), max = new Vector2(width, height)};
 
             // Guardamos el Mapa de Alturas como un conjunto de Vertices potenciales
             for (int x = 0; x < heightMap.GetLength(0); x++)
@@ -354,10 +357,11 @@ namespace GEOMETRY
             Edge e1 = null;
             Edge e2 = null;
 
+            // Hay que tener en cuenta que puede ser Eje Frontera
             if (edge.tIzq != null)
-                e1 = AddEdge(point, edge.tIzq.OppositeVertex(edge));
+                e1 = AddEdge(point, edge.tIzq.GetOppositeVertex(edge));
             if (edge.tDer != null)
-                e2 = AddEdge(point, edge.tDer.OppositeVertex(edge));
+                e2 = AddEdge(point, edge.tDer.GetOppositeVertex(edge));
 
             if (e1 == null && e2 == null)
                 throw new Exception("Al añadir un Punto en una Arista " +
@@ -367,11 +371,9 @@ namespace GEOMETRY
             Edge e3 = AddEdge(point, edge.begin);
             Edge e4 = AddEdge(point, edge.end);
 
-            // Añadimos los triangulos, los 2 ejes nuevos y el eje antiguo
-            // (aquella cuyo begin y end sean el end de la nueva arista)
-            // Y ademas asigna a esos ejes el propio triangulo nuevo, ya sea a la Izquierda o a la Derecha
+            // Añadimos los triangulos
+            // Y ademas asigna a los ejes el propio triangulo nuevo, ya sea a la Izquierda o a la Derecha
             // El e1 esta en el tIzq y el e2 en el tDer, e3 y e4 forman el eje compartido por ambos
-            // Hay que tener en cuenta que puede ser Eje Frontera
             Triangle tri1 = null;
             Triangle tri2 = null;
             Triangle tri3 = null;
@@ -508,7 +510,7 @@ namespace GEOMETRY
             if (neighbour == null)
                 return false;
 
-            Vertex oppositeVertex = neighbour.OppositeVertex(edge);
+            Vertex oppositeVertex = neighbour.GetOppositeVertex(edge);
 
             // Comprobamos si vertice de el vertice del Vecino opuesto al Eje
             // esta dentro del Circulo formado por el vertice de Tri opuesto al Eje (el nuevo) y los demas vertices del Eje
@@ -732,30 +734,30 @@ namespace GEOMETRY
         {
             tri = null;
             collinearEdge = null;
-
+            
             // Buscamos en todos los Triangulos
             for (int i = 0; i < triangles.Count; i++)
             {
                 Triangle triangle = triangles[i];
-
+                
                 // Test Punto-Triangulo
                 Triangle.PointTriPosition test = triangle.PointInTriangle(point, out collinearEdge);
-
+                
                 switch (test)
                 {
                     // Si esta fuera descarta el Triangulo
                     case Triangle.PointTriPosition.OUT:
                         continue;
-
+                
                     // Si esta DENTRO devuelve el Triangulo
                     case Triangle.PointTriPosition.IN:
                         tri = triangle;
                         return true;
-
+                
                     // Si esta en una Arista devuelve la Arista
                     case Triangle.PointTriPosition.COLINEAR:
                         return true;
-
+                
                     // Si es su vertice, descartamos el punto por completo y no devolvemos NADA
                     case Triangle.PointTriPosition.VERTEX:
                         return false;
@@ -764,6 +766,7 @@ namespace GEOMETRY
 
             return false;
         }
+
 
         /// <summary>
         /// Busca los Triangulos que compartan el punto como vertice
@@ -797,23 +800,25 @@ namespace GEOMETRY
                 if (nextTriangle == null && collinearEdge != null)
                 {
                     // Segun la posicion de B relativa al eje colinear de A podemos saber el primer triangulo 
-                    Edge.PointEdgePosition pos = Edge.GetPointEdgePosition(b, collinearEdge.begin.v2D, collinearEdge.end.v2D);
+                    Edge.PointEdgePosition pos =
+                        Edge.GetPointEdgePosition(b, collinearEdge.begin.v2D, collinearEdge.end.v2D);
                     if (pos == Edge.PointEdgePosition.LEFT)
                         nextTriangle = collinearEdge.tIzq;
                     else if (pos == Edge.PointEdgePosition.RIGHT)
                         nextTriangle = collinearEdge.tDer;
                     else
                         // Es colinear a la misma arista que a => NO HAY INTERSECCIONES
-                        return new Vector2[] {};
+                        return new Vector2[] { };
                 }
             }
-            
+
             if (nextTriangle == null)
-                return new Vector2[] {};
-            
+                return new Vector2[] { };
+
             // Si tenemos un Triangulo inicial hacemos un bucle hasta conseguir todas las intersecciones
             List<Vector2> intersections = new List<Vector2>();
-            while (nextTriangle != null && nextTriangle.GetIntersectionPoint(a, b, out Vector2? intersectionPoint, out nextTriangle))
+            while (nextTriangle != null &&
+                   nextTriangle.GetIntersectionPoint(a, b, out Vector2? intersectionPoint, out nextTriangle))
             {
                 if (intersectionPoint != null)
                 {
@@ -821,7 +826,7 @@ namespace GEOMETRY
                     a = (Vector2) intersectionPoint;
                 }
             }
-            
+
             return intersections.ToArray();
         }
 

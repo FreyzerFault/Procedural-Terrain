@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace GEOMETRY
 {
-    [Serializable]
     public class Triangle
     {
         public int index;
@@ -101,7 +100,7 @@ namespace GEOMETRY
         /// <param name="edge">Arista opuesta</param>
         /// <returns>Vertice Opuesto de la Arista</returns>
         /// <exception cref="Exception">No encuentra el opuesto</exception>
-        public Vertex OppositeVertex(Edge edge)
+        public Vertex GetOppositeVertex(Edge edge)
         {
             // Buscamos el vertice que no pertenece a la arista (no es ni Begin ni End)
             Vertex oppositeVertex = null;
@@ -449,18 +448,13 @@ namespace GEOMETRY
 
         /// <summary>
         /// Interpolacion de la altura en un punto 2D del Triangulo 3D.
-        /// Inversamente proporcional a la distancia de cada vertice al punto 2D
+        /// Inversamente proporcional a la distancia de cada vertice al punto 2D.
+        /// https://codeplea.com/triangular-interpolation
         /// </summary>
         /// <param name="p">Punto 2D</param>
         /// <returns>Altura del punto en el triangulo</returns>
         public float GetHeightInterpolation(Vector2 p)
         {
-            // Interpolamos la altura entre los 3 Vertices con pesos
-            // La distancia es una medida poco precisa:
-            // float w1 = 1 / (point - v1.v2D).magnitude;
-            // float w2 = 1 / (point - v2.v2D).magnitude;
-            // float w3 = 1 / (point - v3.v2D).magnitude;
-
             Vector2 a = v1.v2D;
             Vector2 b = v2.v2D;
             Vector2 c = v3.v2D;

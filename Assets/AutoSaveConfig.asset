@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Enabled: 1
   Frequency: 5
-  Logging: 0
+  Logging: 1

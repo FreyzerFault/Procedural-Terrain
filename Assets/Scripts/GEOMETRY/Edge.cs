@@ -33,7 +33,7 @@ namespace GEOMETRY
         public void AssignTriangle(Triangle tri)
         {
             if (Utils.isRight(
-                    tri.OppositeVertex(this).v2D,
+                    tri.GetOppositeVertex(this).v2D,
                     begin.v2D,
                     end.v2D
                 ))
